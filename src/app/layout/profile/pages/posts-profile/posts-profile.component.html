@@ -1,0 +1,119 @@
+<router-outlet></router-outlet>
+<ng-container #container></ng-container>
+
+@if (authService.user()! && this.userService.userProfile() && authService.user()!._id ==
+this.userService.userProfile()!._id) {
+
+<div class="mb-4 mx-4 sm:mx-10 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
+
+    <button (click)="onCreatePost()" class="cursor-pointer relative flex items-center justify-center w-full group">
+        <div [ngClass]="buttonSecondaryClass()"
+            class="h-10 sm:h-12 w-full rounded-full flex justify-center items-center px-4 sm:px-6 shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl truncate ">
+            <i appIcon iconName="plus-solid" [size]="'w-6 h-6'" [color]="''" class="mr-2"></i>
+            <span class="text-sm font-semibold tracking-wide truncate">
+                {{ 'writeNewPost' | translate }}...
+            </span>
+        </div>
+    </button>
+
+    <button (click)="onStartLiveStream()"
+        class="cursor-pointer relative flex items-center justify-center w-full group ">
+        <div [ngClass]="buttonClass()"
+            class="h-10 sm:h-12 w-full rounded-full flex justify-center items-center px-4 sm:px-6 shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl truncate ">
+            <i appIcon iconName="videocam-regular" [size]="'w-6 h-6'" [color]="''" class="mr-2"></i>
+            <span class="text-sm font-semibold tracking-wide">
+                {{ 'startLive' | translate }}
+            </span>
+        </div>
+    </button>
+
+</div>
+
+}
+
+@if (userService.userProfile()?.Tag?.length! > 0) {
+<div class="hidden justify-center flex-wrap gap-2 p-2">
+    <a [routerLink]="['/', $safeNavigationMigration(this.userService.userProfile()?.username)]" (click)="onFind()"
+        routerLinkActive="dark:bg-primary-800/5 text-primary-500 dark:text-primary-500 border-b border-primary-500"
+        class="relative rounded-full flex flex-row items-center 
+                   focus:outline-none bg-white dark:bg-zinc-700/30 
+                   hover:bg-primary-500 hover:dark:bg-primary-600 
+                   hover:text-white text-gray-800 dark:text-gray-200 
+                   py-1 px-3 shadow-lg transition-all duration-300 
+                   ease-in-out transform hover:scale-105">
+        <span class="text-sm font-semibold">
+            {{'all' | translate}}
+        </span>
+    </a>
+
+    @for (item of userService.userProfile()!.Tag; track $index) {
+    <a [routerLink]="getCurrentRoute()" [queryParams]="{ tag: item.tag }"
+        routerLinkActive="dark:bg-primary-800/5 text-primary-500 dark:text-primary-500 border-b border-primary-500"
+        class="relative rounded-full flex flex-row items-center 
+                   focus:outline-none bg-white dark:bg-zinc-700/30 
+                   hover:bg-primary-500 hover:dark:bg-primary-600 
+                   hover:text-white text-gray-800 dark:text-gray-200 
+                   py-1 px-3 shadow-lg transition-all duration-300 
+                   ease-in-out transform hover:scale-105">
+        <span class="text-sm font-semibold">
+            {{item.name}}
+        </span>
+    </a>
+    }
+</div>
+}
+
+<div class="flex flex-wrap gap-2 p-1 sm:gap-4 sm:p-4 justify-between">
+
+    <!-- Tarjetas Reales (Tu loop actual) -->
+    @for (item of this.postService.postsUser(); track item._id) {
+    <app-post-card [item]="item" [showProfile]="false" [showPined]="true" (postClick)="onPost($event)"
+        class="flex-grow shrink-0 basis-[calc(50%-0.5rem)] sm:basis-auto max-w-[calc(50%-0.25rem)] sm:max-w-[48%] lg:max-w-[32%]">
+        <!-- lg:max-w-[32%] xl:max-w-[24%] -->
+    </app-post-card>
+    }
+
+    <!-- Skeletons Alineados -->
+    @if (loading()) {
+    @for (i of [1,2,3,4,5,6,7,8]; track i) {
+    <div
+        class="relative flex-grow shrink-0 basis-[calc(50%-0.5rem)] sm:basis-[calc(33%-1rem)] lg:basis-[calc(25%-1rem)] 
+                        max-w-full sm:max-w-[48%] lg:max-w-[32%] xl:max-w-[24%] 
+                        h-[300px] md:h-[400px] bg-zinc-200 dark:bg-zinc-800 rounded-[1.5rem] md:rounded-[2rem] animate-pulse">
+
+        <!-- Simulación de contenido interno para dar peso visual -->
+        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-zinc-300 dark:bg-zinc-700"></div>
+                <div class="h-3 w-16 bg-zinc-300 dark:bg-zinc-700 rounded-lg"></div>
+            </div>
+            <div class="h-6 w-12 bg-zinc-300 dark:bg-zinc-700 rounded-xl"></div>
+        </div>
+    </div>
+    }
+    }
+
+    <!-- Relleno invisible para mantener la alineación de la última fila -->
+    <div class="flex-[100] grow-[100] basis-auto h-0"></div>
+</div>
+
+@if (!loading() && this.postService.postsUser().length === 0) {
+<div
+    class="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-6 text-zinc-500 dark:text-zinc-400">
+    <!-- Ícono principal -->
+    <div class="flex items-center justify-center w-24 h-24 bg-white dark:bg-zinc-800 rounded-full shadow-md">
+        <i appIcon iconName="grid-view-regular" [size]="'w-12 h-12'" [color]="'text-zinc-500 dark:text-zinc-400'"></i>
+    </div>
+
+    <!-- Título principal -->
+    <h2 class="text-2xl font-medium text-zinc-700 dark:text-zinc-200">{{'noPostsYet' | translate}}</h2>
+
+    <!-- Mensaje secundario -->
+    <p class="text-base font-light max-w-md hidden">
+        {{'startSavingYourFavoriteContent' | translate}}
+    </p>
+
+</div>
+}
+
+<!-- <app-users-posts /> -->

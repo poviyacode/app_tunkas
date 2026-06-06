@@ -1,0 +1,379 @@
+<ng-container #container></ng-container>
+<div class="relative w-full h-full bg-black overflow-hidden">
+  <!-- publish notification -->
+
+  @if (publisherStateNotification() === 'NO_PLAY' && role() === 'audience') {
+    <div class="fixed inset-0 flex items-center justify-center bg-primary-900/5 z-50">
+
+      <!-- Mensaje -->
+      <p class="mt-4 text-white text-center text-lg font-semibold">
+        {{'streamPaused' | translate}}
+      </p>
+
+    </div>
+  }
+
+  <!-- @if (role() === 'audience' && !isWatchingStream) { -->
+  <!-- <div class="fixed inset-0 flex items-center justify-center bg-transparent z-0">
+  <button (click)="onReactivateLive()"
+    class="relative z-10 flex items-center justify-center gap-3 text-white text-lg font-bold bg-transparent border-2 border-white rounded-full px-8 py-4 shadow-lg transition-all duration-300 hover:bg-white hover:text-black focus:outline-none">
+    <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+    <span class="uppercase">Live</span>
+    <i appIcon iconName="play-solid" [size]="'w-8 h-8'" [color]="'text-white'"></i>
+  </button>
+  {{roomState()}}
+</div> -->
+<!-- } -->
+
+<!-- Videos en el fondo -->
+<div class="absolute inset-0 ">
+
+  <div class="w-full h-screen relative bg-gradient-to-br from-primary-900 via-primary-900 to-black"
+    [style.background-image]="'url(' + (userService.userProfile()?.liveCapture?.result?.variants[0] || '') + ')'"
+    [attr.key]="userService.userProfile()?._id"
+    style="background-repeat: no-repeat; background-size: cover; background-position: center;">
+
+    <!-- Lightbox con desenfoque y fondo translúcido -->
+    <div
+      class=" grid gap-0 {{viewLocal() && viewRemote() ? 'grid-cols-2 md:grid-cols-2': 'grid-cols-1' }}  lightbox backdrop-blur-xl absolute inset-0 flex justify-center items-center">
+
+      <!-- Video local (transmisor) -->
+      <div id="local-video" #localVideo [ngClass]="viewLocal() ? 'block' : 'hidden'"
+        class="w-auto h-full max-w-full max-h-full relative overflow-hidden">
+      </div>
+
+      <!-- Video remoto (espectador) -->
+      <div id="remote-video" #remoteVideo [ngClass]="viewRemote() ? 'block' : 'hidden'"
+        class="w-auto h-full max-w-full max-h-full relative overflow-hidden">
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Elementos encima de los videos -->
+<div class="relative z-10 flex flex-col items-center w-full h-full">
+  <!-- Sección del perfil -->
+  <div class="absolute top-2 sm:top-2 px-2 flex justify-between items-center w-full">
+
+    <button (click)="onReturnProfile()" class=" bg-zinc-800 bg-opacity-30 rounded-full flex items-center px-0 py-0">
+      <!-- Imagen de perfil -->
+      <div
+        [style.background-image]="userService.userProfile()?.Profile!.length > 0 && userService.userProfile()?.Profile![0].cloudflare ? 'url(' + userService.userProfile()?.Profile![0].cloudflare.result.variants[0] + ')' : ''"
+        class="w-10 h-10 rounded-full bg-cover bg-center border-2 border-transparent">
+      </div>
+      <!-- Nombre de usuario -->
+      <div class="mx-1 text-white">
+        <h3 class="text-sm font-semibold">
+          {{ userService.userProfile()?.username || '' }}
+        </h3>
+      </div>
+    </button>
+
+    <!-- Controles -->
+    <div class="flex justify-end items-center space-x-2">
+
+      <!-- button menu -->
+      @if (showMore) {
+        <div #moreContainer
+          class="absolute top-12 right-0 w-full sm:w-64 backdrop-blur-xl bg-zinc-900/80 text-white border border-zinc-800 rounded-xl shadow-2xl p-4 z-50">
+
+          <ul class="space-y-2">
+            @if(role() === 'transmitter') {
+
+              <!-- Botón para parar la transmisión -->
+              @if (publisherState() === 'PUBLISHING') {
+                <li>
+                  <button (click)="onStopLive()"
+                    class="bg-red-600 hover:bg-red-700 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                    <i appIcon iconName="stop-solid" [size]="'w-6 h-6'" [color]="''"></i>
+                    <span>{{ 'stopLive' | translate }}</span>
+                  </button>
+                </li>
+              }
+
+              <!-- Botón para reactivar la transmisión -->
+              @if (publisherState() === 'NO_PUBLISH') {
+                <li>
+                  <button (click)="onReactivateLive()"
+                    class="bg-green-600 hover:bg-green-700 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                    <i appIcon iconName="play-solid" [size]="'w-6 h-6'" [color]="''"></i>
+                    <span>{{ 'reactivateLive' | translate }}</span>
+                  </button>
+                </li>
+              }
+
+              <!-- Botón para activar/desactivar la cámara -->
+              <li>
+                <button (click)="toggleCamera()"
+                  class="bg-black/30 hover:bg-black/40 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                  @if (!localStream?.getVideoTracks()[0]?.enabled) {
+                    <i appIcon iconName="videocam-off-regular"
+                    [size]="'w-6 h-6'" [color]="''"></i>
+                  }
+                  @if (localStream?.getVideoTracks()[0]?.enabled) {
+                    <i appIcon iconName="videocam-regular"
+                    [size]="'w-6 h-6'" [color]="''"></i>
+                  }
+                  <span>{{ 'camera' | translate }}</span>
+                </button>
+              </li>
+
+              <!-- Botón para activar/desactivar el micrófono -->
+              <li>
+                <button (click)="toggleAudio()"
+                  class="bg-black/30 hover:bg-black/40 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                  @if (!localStream?.getAudioTracks()[0]?.enabled) {
+                    <i appIcon iconName="microphone-slash-solid"
+                    [size]="'w-6 h-6'" [color]="''"></i>
+                  }
+                  @if (localStream?.getAudioTracks()[0]?.enabled) {
+                    <i appIcon iconName="microphone-solid"
+                    [size]="'w-6 h-6'" [color]="''"></i>
+                  }
+                  <span>{{ 'microphone' | translate }}</span>
+                </button>
+              </li>
+
+              <!-- Botón para capturar fotograma del video -->
+              <li>
+                <button (click)="captureVideoFrame(1)"
+                  class="bg-black/30 hover:bg-black/40 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                  <i appIcon iconName="camera-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                  <span>{{ 'captureFrame' | translate }}</span>
+                </button>
+              </li>
+
+              <!-- Botón para finalizar la llamada de video -->
+              @if (role() === 'transmitter' && viewRemote()) {
+                <div>
+                  <li>
+                    <button (click)="endVideoCall()"
+                      class="bg-red-600 hover:bg-red-700 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                      <i class="fas fa-phone-slash"></i>
+                      <span>{{ 'endCall' | translate }}</span>
+                    </button>
+                  </li>
+                </div>
+              }
+            }
+
+            @if(role() === 'audience') {
+              <!-- Botón para activar/desactivar la cámara del espectador -->
+              @if(viewLocal()) {
+                <li>
+                  <button (click)="toggleCamera()"
+                    class="bg-black/30 hover:bg-black/40 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                    @if (!localStream?.getVideoTracks()[0]?.enabled) {
+                      <i appIcon iconName="videocam-off-regular"
+                      [size]="'w-6 h-6'" [color]="''"></i>
+                    }
+                    @if (localStream?.getVideoTracks()[0]?.enabled) {
+                      <i appIcon iconName="videocam-regular"
+                      [size]="'w-6 h-6'" [color]="''"></i>
+                    }
+                    <span>{{ 'camera' | translate }}</span>
+                  </button>
+                </li>
+                <!-- Botón para activar/desactivar el micrófono del espectador -->
+                <li>
+                  <button (click)="toggleAudio()"
+                    class="bg-black/30 hover:bg-black/40 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                    @if (!localStream?.getAudioTracks()[0]?.enabled) {
+                      <i appIcon iconName="microphone-slash-solid"
+                      [size]="'w-6 h-6'" [color]="''"></i>
+                    }
+                    @if (localStream?.getAudioTracks()[0]?.enabled) {
+                      <i appIcon iconName="microphone-solid"
+                      [size]="'w-6 h-6'" [color]="''"></i>
+                    }
+                    <span>{{ 'microphone' | translate }}</span>
+                  </button>
+                </li>
+              }
+
+              <!-- Botón para capturar fotograma del video -->
+              <li>
+                <button (click)="captureVideoFrame(1)"
+                  class="bg-black/30 hover:bg-black/40 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                  <i appIcon iconName="camera-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                  <span>{{ 'captureFrame' | translate }}</span>
+                </button>
+              </li>
+            }
+
+            @if(role() === 'transmitter') {
+              <li>
+                <button (click)="onLogoutRoom()"
+                  class="bg-red-500 hover:bg-red-600 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                  <i appIcon iconName="logout-solid" [size]="'w-6 h-6'" [color]="''"></i>
+                  <span>{{ 'Logout' | translate }}</span>
+                </button>
+              </li>
+            }
+
+            <li>
+              <button (click)="onReturnCurrentProfile()"
+                class="bg-black/30 hover:bg-black/40 text-white w-full py-2 px-2 rounded-lg flex items-center justify-start space-x-4 transition-all duration-300 transform hover:scale-105">
+                @if (authService.user()?.Profile?.[0]?.cloudflare?.result?.variants?.[0] || authService.user()?.Profile?.[0]?.url) {
+                  <div
+                    class="border-2 border-white dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-700 bg-cover rounded-full w-6 h-6 shadow-md flex-shrink-0"
+                    [style.background-image]="'url(' + (authService.user()?.Profile?.[0]?.cloudflare?.result?.variants?.[0] || authService.user()?.Profile?.[0]?.url || '') + ')'"
+                    >
+                  </div>
+                }
+
+                <p class="font-semibold text-sm text-white text-left truncate">
+                  {{ authService.user()?.username }}
+                </p>
+              </button>
+            </li>
+
+          </ul>
+        </div>
+      }
+
+      <div class="hidden">
+        <p>
+          viewLocal -> {{viewLocal()}}; viewRemote -> {{ viewRemote()}}
+        </p>
+        <p>
+          {{roomState()}}
+        </p>
+        <p>
+          {{publisherState()}}
+        </p>
+        <p>
+          {{publisherStateNotification()}}
+        </p>
+      </div>
+
+      <!-- button esternal-->
+      @if(role() === 'transmitter') {
+        <button (click)="onTransactionCreditsReceivedModal()"
+          class="bg-black/20 text-xs text-white backdrop-blur-sm border-none w-10 h-10 rounded-xl flex justify-center items-center transition-colors duration-300 hover:bg-white/20 cursor-pointer">
+          <i appIcon iconName="gift-regular" [size]="'w-6 h-6'" [color]="'text-yellow-500'"></i>
+          {{ transactionCreditsReceivedAmount() }}
+        </button>
+      }
+
+      <button
+        class="bg-black/20 text-xs text-white backdrop-blur-sm border-none w-10 h-10 rounded-xl flex justify-center items-center transition-colors duration-300 hover:bg-white/20 cursor-pointer">
+        <i appIcon iconName="user-regular" [size]="'w-6 h-6'" [color]="''"></i>
+        {{ connectedUsersCount() }}
+      </button>
+
+      @if(role() === 'audience') {
+
+        <button (click)="requestJoinCall()"
+          class="bg-black/20 text-white backdrop-blur-sm border-none w-10 h-10 rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-white/20 cursor-pointer">
+          <i appIcon iconName="duo-regular" [size]="'w-6 h-6'" [color]="''"></i>
+        </button>
+
+        @if (!authService.user()) {
+          <button (click)="onLogin()"
+            class="bg-primary-600 uppercase py-2 px-4 text-xs rounded-full text-white font-semibold shadow-md hover:shadow-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-300 ease-in-out">
+            {{ 'signIn' | translate }}
+          </button>
+        }
+      }
+
+      <button (click)="onShareProfile()"
+        class="bg-black/20 text-white backdrop-blur-sm border-none w-10 h-10 rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-white/20 cursor-pointer">
+        <i appIcon iconName="share-regular" [size]="'w-6 h-6'" [color]="''"></i>
+      </button>
+
+      <button (click)="onMoreToogle()"
+        class="bg-black/20 text-white backdrop-blur-sm border-none w-10 h-10 rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-white/20 cursor-pointer">
+        <i appIcon iconName="ellipsis-vertical-regular" [size]="'w-6 h-6'" aria-hidden="true" [color]="''"></i>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Contenedor de comentarios -->
+  <div #commentContainer
+    class="absolute bottom-16 left-4 right-4 max-h-96 w-96 overflow-y-auto rounded-lg text-white space-y-1">
+    <!-- Bucle para mostrar los comentarios -->
+
+    @for (item of this.commentService.commentsLive(); track $index) {
+      <div class="media flex items-center w-auto">
+        <!-- Imagen de perfil del usuario -->
+        @if (item.avatar) {
+          <div class="w-8 h-8 rounded-full overflow-hidden shadow-lg mr-2 flex-shrink-0">
+            <img class="w-full h-full object-cover" [src]="item.avatar" alt="User Profile" [attr.key]="item.ID" />
+          </div>
+        } @else {
+        <div class="w-8 h-8 rounded-full border border-zinc-300 dark:border-zinc-600 text-zinc-300 dark:text-zinc-600 
+              flex justify-center items-center shadow-lg mr-2 flex-shrink-0 bg-zinc-100 dark:bg-primary-800/10">
+            <span appIcon iconName="user-regular" [color]="''" [size]="'w-5 h-5'"></span>
+          </div>
+        }
+
+        <!-- Contenedor del comentario -->
+        <div class="media-body w-full mr-2">
+          <div class="text-sm text-white/40 font-normal leading-tight">{{ item.name }}</div>
+          <div class="text-sm text-white break-words rounded-lg leading-tight">{{ item.content }}</div>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- send comment -->
+  <div class="absolute bottom-1 flex justify-between items-center gap-1 w-full sm:w-96 px-1">
+
+    @if (authService.user() && role() === 'audience') {
+      <button (click)="onTipDialog()" type="button"
+        class="flex-shrink-0 bg-black/20 text-white backdrop-blur-sm border-none w-10 h-10 rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-white/20 cursor-pointer">
+        <span appIcon iconName="povicoin-solid" [size]="'w-6 h-6'"></span>
+      </button>
+    }
+
+    @if (authService.user()) {
+      <form [formGroup]="myFormComment" id="form" novalidate autocomplete="off" (submit)="onSendBarrageMessage()"
+        class="flex items-center w-full">
+
+        <div
+          class="flex items-center bg-zinc-800/50 text-white backdrop-blur-sm border-none rounded-xl w-full relative">
+          <input type="text" formControlName="text" id="text" [maxlength]="100"
+            placeholder="{{'addComment' | translate}}"
+            class="w-full h-12 px-2 bg-transparent text-white placeholder-zinc-300 outline-none overflow-auto resize-x">
+
+            <button type="button" (click)="toggleEmojiPicker()" class="text-white flex justify-between items-center">
+              <i appIcon iconName="face-grin-regular" [size]="'w-6 h-6'" [color]="'text-zinc-200'"></i>
+            </button>
+          </div>
+        </form>
+
+        @if (showEmojiPicker) {
+          <div #emojiContainer
+            class="absolute bottom-12 left-0 w-full sm:w-96 bg-zinc-900 text-white border border-zinc-800 rounded-lg shadow-xl p-2 z-50">
+            <!-- Contenedor de las pestañas -->
+            <div class="flex border-b border-zinc-800 mb-2 truncate overflow-x-auto">
+              @for (category of emojiCategories; track category; let i = $index) {
+                <button (click)="selectTabEmoji(i)"
+                  [class.bg-zinc-800]="emojiSelectedTab === i" [class.text-white]="emojiSelectedTab === i"
+                  class="px-4 py-2 text-sm font-semibold capitalize text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all">
+                  {{ category }}
+                </button>
+              }
+            </div>
+            <!-- Contenedor de emojis con altura fija y scroll -->
+            <div class="grid grid-cols-6 sm:grid-cols-8 gap-2 h-64 overflow-y-auto">
+              @for (emoji of emojis[emojiCategories[emojiSelectedTab]]; track emoji) {
+                <span (click)="addEmoji(emoji)"
+                  class="cursor-pointer text-2xl p-1 hover:bg-zinc-700 rounded">
+                  {{ emoji }}
+                </span>
+              }
+            </div>
+          </div>
+        }
+      }
+
+    </div>
+
+  </div>
+</div>

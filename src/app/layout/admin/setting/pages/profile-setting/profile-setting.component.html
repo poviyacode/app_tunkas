@@ -1,0 +1,614 @@
+@if (this.authService.user()) {
+  <section class="mx-auto max-w-md md:max-w-7xl mb-20">
+    <!-- personalizartion -->
+    <form [formGroup]="myformCover" novalidate class="relative group">
+      @if(!uploadingCover()) {
+        <div class="relative w-full h-64 sm:h-80 md:h-[400px] overflow-hidden">
+
+          @let coverMedia = $safeNavigationMigration(this.authService.user()?.Cover?.[0]);
+          @let mediaDetails = getMediaDetails(coverMedia);
+
+          @if (coverMedia) {
+
+            <div class="absolute inset-0">
+              <div class="w-full h-full bg-cover bg-center scale-110 blur-2xl opacity-70"
+                [style.background-image]="'url(' + mediaDetails?.url + ')'">
+              </div>
+              <div class="absolute inset-0 bg-black/40"></div>
+            </div>
+
+            <div class="relative w-full h-full flex justify-center items-center">
+              <img [src]="$safeNavigationMigration(mediaDetails?.url)" class="max-w-full h-full object-contain sm:object-contain fade-edges-mask" />
+              <div
+                class="absolute inset-x-0 bottom-0 h-1/3 sm:h-1/2 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent">
+              </div>
+            </div>
+
+          } @else {
+            <div class="flex items-center justify-center h-full border-b border-zinc-200 dark:border-zinc-800">
+              <i appIcon iconName="image-regular" class="text-zinc-400 opacity-20" [size]="'w-20 h-20'"></i>
+            </div>
+          }
+
+          <div class="absolute bottom-4 right-4 z-20">
+            <label for="file-upload"
+              class="flex items-center justify-center w-10 h-10 text-white transition-all bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full cursor-pointer border border-white/30 shadow-lg">
+              <i appIcon iconName="add-photo-regular" [size]="'w-6 h-6'"></i>
+              <input #fileInput id="file-upload" type="file" formControlName="file" accept="image/*"
+                (change)="onFileCoverChange($event)" class="sr-only">
+              </label>
+            </div>
+          </div>
+        } @else {
+          @for (item of imagesCover; track item) {
+            <div class="relative w-full h-64 sm:h-80 md:h-[400px] overflow-hidden">
+              @if (item.typeFile![0] == 'image') {
+                <div class="absolute inset-0">
+                  <div class="w-full h-full bg-cover bg-center scale-110 blur-2xl opacity-70"
+                    [style.background-image]="'url(' + item?.url + ')'">
+                  </div>
+                  <div class="absolute inset-0 bg-black/40"></div>
+                </div>
+                <div class="relative w-full h-full flex justify-center items-center">
+                  <img [src]="$safeNavigationMigration(item?.url)" class="max-w-full h-full object-contain sm:object-contain fade-edges-mask" />
+                  <div
+                    class="absolute inset-x-0 bottom-0 h-1/3 sm:h-1/2 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent">
+                  </div>
+                </div>
+              }
+              @if (item.typeFile![0] == 'video') {
+                <video autoplay muted loop playsinline class="object-cover w-full h-full">
+                  <source [src]="item.url" type="video/mp4">
+                </video>
+              }
+              <div class="absolute bottom-4 right-4 flex space-x-2 z-20">
+                <button (click)="onSubmitCover()" [disabled]="myformCover.invalid"
+                  class="flex items-center justify-center w-10 h-10 text-white bg-green-500/80 hover:bg-green-600 backdrop-blur-sm rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">
+                  <i appIcon iconName="cloud-upload-regular" [size]="'w-6 h-6'"></i>
+                </button>
+                <button (click)="deleteImageCover(item)"
+                  class="flex items-center justify-center w-10 h-10 text-white bg-red-500/80 hover:bg-red-600 backdrop-blur-sm rounded-full transition-all shadow-lg">
+                  <i appIcon iconName="delete-regular" [size]="'w-6 h-6'"></i>
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </form>
+
+      <form [formGroup]="myformProfile" novalidate class="relative -mt-36 md:-mt-48 ml-3">
+        @if(!uploadingProfile()) {
+          <div class="relative group inline-block">
+            <div [style.backgroundImage]="'url(' + imageProfile() + ')'"
+              class="w-32 h-32 md:w-44 md:h-44 rounded-full bg-cover bg-center border-4 border-zinc-700/10 shadow-2xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+
+              <label for="file-upload-profile"
+                class="absolute inset-0 flex items-center justify-center cursor-pointer rounded-full">
+                <div
+                  class="flex items-center justify-center w-10 h-10 text-white transition-all bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full cursor-pointer border border-white/30 shadow-lg">
+                  <i appIcon iconName="add-photo-regular" class="text-white" [size]="'w-6 h-6'"></i>
+                  <input id="file-upload-profile" type="file" formControlName="file" accept="image/*"
+                    (change)="onFileProfileChange($event)" class="sr-only">
+                  </div>
+                </label>
+              </div>
+            </div>
+
+          } @else {
+            @for (item of imagesProfile; track $index) {
+              <div class="relative group inline-block">
+                <div [style.backgroundImage]="'url(' + item.url + ')'"
+                  class="w-32 h-32 md:w-44 md:h-44 rounded-full bg-cover bg-center border-4 border-zinc-700/10 shadow-2xl">
+
+                  <div class="absolute inset-0 flex items-center justify-center space-x-2  rounded-full ">
+                    <button (click)="onSubmitProfile()" [disabled]="myformProfile.invalid"
+                      class="w-9 h-9 flex items-center justify-center bg-green-500 text-white rounded-full hover:scale-110 transition-transform shadow-lg">
+                      <i appIcon iconName="cloud-upload-regular" [size]="'w-5 h-5'"></i>
+                    </button>
+                    <button (click)="deleteImageProfile(item)"
+                      class="w-9 h-9 flex items-center justify-center bg-red-500 text-white rounded-full hover:scale-110 transition-transform shadow-lg">
+                      <i appIcon iconName="delete-regular" [size]="'w-5 h-5'"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </form>
+        <!-- end personalization -->
+
+        <div class="mx-2 sm:mx-0 mb-10 sm:mb-4 mt-8 ">
+          <div class="columns-1 sm:columns-2 lg:columns-2 gap-4 space-y-4">
+
+            <!-- visualizations  -->
+            <section [ngClass]="cardClass()" class="w-full break-inside-avoid   p-2 sm:p-4 ">
+              <div class="flex justify-between">
+                <h4 class="text-lg font-semibold">
+                  <i appIcon iconName="visibility-regular" [size]="'w-7 h-7'" [color]="''"></i> {{'views' | translate}}
+                </h4>
+              </div>
+
+              <div class="flex justify-between items-center space-x-1 mt-2 text-zinc-800 dark:text-zinc-200">
+                <div class="flex flex-col space-y-1">
+                  <div class="leading-none cursor-pointer space-x-1">
+                    <span class="font-semibold">{{'total' | translate}}: </span>
+                    <span>{{this.authService.user()!.view | number}}</span>
+                  </div>
+                  @if (this.authService.user()!.viewdAt) {
+                    <div>
+                      <span class="font-semibold">{{'lastVisit' | translate}}: </span>
+                      <span>{{this.authService.user()!.viewdAt! | dateAgo}}</span>
+                    </div>
+                  }
+                </div>
+                @if (this.authService.user()!.viewCurrent) {
+                  <div class="flex flex-col space-y-1">
+                    <div class=" leading-none  ml-2 cursor-pointer space-x-1">
+                      <span class="font-semibold">{{'today' | translate}}: </span>
+                      <span>{{ this.authService.user()!.view! - this.authService.user()!.viewCurrent! | number}}</span>
+                    </div>
+                    @if (this.authService.user()!.viewdAt && this.authService.user()!.viewDateCurrent) {
+                      <div
+                        class="text-right text-xs">
+                        {{this.authService.user()!.viewDateCurrent}}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+            </section>
+
+            <!-- info -->
+            <section [ngClass]="cardClass()" class="w-full break-inside-avoid   p-2 sm:p-4">
+              <div class="flex justify-between">
+                <h4 class="text-lg font-semibold">{{'personalData' | translate}}</h4>
+                <div (click)="onChangeEditInfo()" class="cursor-pointer">
+                  <i appIcon iconName="edit-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                </div>
+              </div>
+
+              <ul class="mt-2 divide-y divide-zinc-200 dark:divide-zinc-700/50 text-zinc-800 dark:text-zinc-200">
+                <li class="flex py-2 ">
+                  <span class="text-sm font-medium  w-24">
+                    {{'name' | translate}}:
+                  </span>
+                  <span>
+                    {{this.authService.user()!.alias}}
+                  </span>
+                </li>
+                <li class="flex py-2 ">
+                  <span class="text-sm font-medium  w-24">
+                    {{'age' | translate}}:
+                  </span>
+                  <span class="lowercase">
+                    {{ 'yearsOld' | translate: { age: authService.user()?.age || 18 | calculateAge } }}
+                  </span>
+                </li>
+                <li class="flex py-2 ">
+                  <span class="text-sm font-medium  w-24">
+                    {{'gender' | translate}}:
+                  </span>
+                  @if (authService.user()?.gender === 'WOMAN') {
+                    <span class="bg-pink-500 rounded-full w-4 h-4 flex justify-center items-center">
+                      <i appIcon iconName="female-regular" [color]="'text-white'" [size]="'w-4 h-4'"></i>
+                    </span>
+                  } @else if (authService.user()?.gender === 'MAN') {
+                    <span class="bg-blue-500 rounded-full w-4 h-4 flex justify-center items-center">
+                      <i appIcon iconName="male-regular" [color]="'text-white'" [size]="'w-4 h-4'"></i>
+                    </span>
+                  }
+                </li>
+                <li class="flex py-2 ">
+                  <span class="text-sm font-medium  w-24">
+                    {{'Country' | translate}}:
+                  </span>
+                  <span>
+                    {{this.authService.user()?.Country?.name}}
+                  </span>
+                </li>
+              </ul>
+              <div class="space-y-4 mt-4">
+                <div class="text-sm font-medium ">{{'aboutMe' | translate}}</div>
+                <div [innerHTML]="this.authService.user()!.bio" class="text-zinc-700 dark:text-zinc-400 "></div>
+              </div>
+            </section>
+
+            @if (dialogService.activeModal() === 'info') {
+              <div [ngClass]="modalClass()" (click)="onCloseModal()">
+                <div [ngClass]="cardModalClass()" class="w-full max-w-xl overflow-hidden" (click)="($event.stopPropagation())"
+                  @flyInOut>
+
+                  <section class="p-2 sm:p-4 overflow-y-auto max-h-[80vh]">
+                    <div class="flex justify-between">
+                      <h4 class="text-lg font-semibold">{{'changePersonalInformation' | translate}}</h4>
+                    </div>
+
+                    <form [formGroup]="myformInfo" (submit)="onSubmitInfo()" novalidate class="space-y-3 px-2 sm:px-0 mt-4">
+                      <!-- Name Field -->
+                      <fieldset class="space-y-2">
+                        <label class="block text-sm font-medium ">
+                          <i appIcon iconName="user-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                          {{ 'name' | translate }}
+                        </label>
+                        <div class="relative">
+                          <input formControlName="alias" type="text" placeholder="{{ 'enterYourName' | translate }}"
+                            [ngClass]="inputClass(myformInfo,'alias')" />
+                          </div>
+                        </fieldset>
+
+                        <!-- Age Field and Gender Field -->
+                        <fieldset class="flex space-x-1">
+                          <div class="w-full sm:w-1/2 flex flex-col space-y-2">
+                            <label for="gender" class="block text-sm font-medium ">
+                              <i appIcon iconName="wc-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                              {{ 'gender' |
+                              translate }}
+                            </label>
+                            <div class="relative w-full">
+                              <select formControlName="gender" [ngClass]="inputClass(myformInfo, 'gender')" autocomplete="off">
+                                @for (item of genderArray; track item) {
+                                  <option [value]="item.value">{{ item.name | translate
+                                  }}</option>
+                                }
+                              </select>
+                            </div>
+                          </div>
+                          <div class="w-full sm:w-1/2 flex flex-col space-y-2">
+                            <label for="gender" class="block text-sm font-medium ">
+                              <i appIcon iconName="cake-add-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                              {{ 'age' | translate }}
+                            </label>
+                            <div class="relative w-full">
+                              <input formControlName="age" id="age" minlength="2" maxlength="2"
+                                [ngClass]="inputClass(myformInfo, 'age')" />
+                              </div>
+                            </div>
+                          </fieldset>
+
+                          <fieldset class="flex space-x-1">
+                            <div class="w-full sm:w-1/2 flex flex-col space-y-2">
+                              <label for="country" class="block text-sm font-medium ">
+                                <i appIcon iconName="flag-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                                {{ 'country' | translate }}
+                              </label>
+                              <div class="relative w-full">
+                                <select formControlName="country" [ngClass]="inputClass(myformInfo, 'country')" autocomplete="off">
+                                  @for (item of countriesPhone(); track item) {
+                                    <option [value]="item.code">
+                                    {{ item.name! | translate }}</option>
+                                  }
+                                </select>
+                              </div>
+                            </div>
+                          </fieldset>
+
+                          <!-- Interested In Field -->
+                          <fieldset class="mb-4 hidden">
+                            <div class="flex justify-between items-center">
+                              <label for="interestedIn" class="mb-2 font-semibold">{{'interestedIn' | translate}}</label>
+                            </div>
+                            <div class="relative w-full">
+                              <select formControlName="interestedIn" [ngClass]="inputClass(myformInfo, 'interestedIn')">
+                                @for (item of interestedInArray; track item) {
+                                  <option [value]="item.value">{{item.name | translate}}
+                                  </option>
+                                }
+                              </select>
+                            </div>
+                          </fieldset>
+
+                          <!-- About Me Field -->
+                          <fieldset class="flex space-x-1">
+                            <div class="w-full flex flex-col space-y-2">
+                              <label for="bio" class="block text-sm font-medium ">
+                                {{ 'aboutMe' |
+                                translate }}
+                              </label>
+                              <div class="relative w-full">
+                                <textarea appAutoResizeTextarea formControlName="bio" id="bio"
+                                [ngClass]="textareaClass(myformInfo, 'bio', 'h-28')"></textarea>
+                              </div>
+                            </div>
+                          </fieldset>
+
+                          <!-- Save Button -->
+                          <fieldset class="flex justify-center space-x-5 mt-5">
+                            <button type="button" (click)="onCloseModal()" [ngClass]="buttonSecondaryClass()">
+                              {{'discard' | translate}}
+                            </button>
+                            <button type="submit" [ngClass]="buttonClass()" [disabled]="myformInfo.status != 'VALID'">
+                              <span class="font-semibold text-sm">{{ "save" | translate }}</span>
+                            </button>
+                          </fieldset>
+                        </form>
+                      </section>
+
+                    </div>
+                  </div>
+                }
+
+                <!-- social media  -->
+                <fieldset [ngClass]="cardClass()" class="w-full break-inside-avoid   p-2 sm:p-4">
+                  <div class="flex justify-between">
+                    <div>
+                      <h4 class="text-lg font-semibold ">{{'socialMedia' | translate}}</h4>
+                      <h5 class="text-zinc-700 dark:text-zinc-400 text-sm">{{'createTextSocialMedia' | translate}}</h5>
+                    </div>
+                  </div>
+                  @if (this.authService.user()!) {
+                    <div>
+                      <div class="flex justify-center mt-5">
+                        <button (click)="onAddButtonSocialMedia()" [ngClass]="buttonClass()">
+                          <span class="font-semibold text-sm">{{ "addButton" | translate }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  }
+
+                  @if (socialMediaItems().length > 0) {
+                    <ul class="w-full divide-y divide-zinc-200 dark:divide-zinc-700/50  break-inside-avoid dark:text-zinc-200 mt-4"
+                      cdkDropList [cdkDropListData]="socialMediaItems()" (cdkDropListDropped)="dropSocialMedia($event)">
+                      @for (item of socialMediaItems(); track item._id) {
+                        <li class="flex justify-between py-2" cdkDrag>
+
+            <a [href]="item.type === 'WhatsApp' ? ('https://wa.me/' + item.phonePrefix + item.phone + '/?text=' + textMessage()) : item.link"
+              target="_blank" class="flex space-x-2 items-center">
+              @if (item.type === 'website') {
+                              <span class="text-sm font-semibold">{{item.title}}</span>
+                            } @else {
+                              <img [src]="getModifiedIconPath(item.type!)" alt="{{item.type}}" class="w-8 h-8 rounded-full shadow-md">
+                              <span class="text-sm font-semibold">{{item.type}}</span>
+                            }
+                          </a>
+
+                          <div class="flex space-x-2">
+                            <button (click)="onEditButtonSocialMedia(item)" [ngClass]="buttonSecondaryClass()"
+                              class="rounded-full w-9 h-9">
+                              <i appIcon iconName="edit-regular" [size]="'w-5 h-5'" [color]="''"></i>
+                            </button>
+                            <button (click)="onDeleteSocialMedia(item._id!)" [ngClass]="buttonSecondaryClass()"
+                              class="rounded-full w-9 h-9">
+                              <i appIcon iconName="delete-regular" [size]="'w-5 h-5'" [color]="''"></i>
+                            </button>
+                          </div>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                </fieldset>
+
+                @if (dialogService.activeModal() === 'socialMedia') {
+                  <div [ngClass]="modalClass()" (click)="onCloseModal()">
+                    <div [ngClass]="cardModalClass()" class="w-full max-w-xl overflow-hidden" (click)="($event.stopPropagation())"
+                      @flyInOut>
+                      <section class="p-2 sm:p-4 overflow-y-auto max-h-[80vh]">
+                        <div class="flex justify-between">
+                          <h4 class="text-lg font-semibold">{{'socialMediaButton' | translate}}</h4>
+                        </div>
+
+                        <form [formGroup]="myformSocialMedia" (submit)="onSubmitSocialMedia($event)" novalidate
+                          class="space-y-3 px-2 sm:px-0 mt-4">
+
+                          <fieldset class="space-y-2">
+                            <label class="block text-sm font-medium ">
+                              <i appIcon iconName="globe-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                              {{ 'socialMedia' | translate }}
+                            </label>
+                            <div class="relative">
+                              <select formControlName="type" [ngClass]="inputClass(myformSocialMedia, 'type')">
+                                @for (item of this.socialMediaArray; track item) {
+                                  <option value="{{item.type}}">{{item.type | translate}}
+                                  </option>
+                                }
+                              </select>
+                            </div>
+                          </fieldset>
+
+                          @if (myformSocialMedia.get('type')!.value === 'WhatsApp') {
+                            <fieldset class="grid grid-cols-2 gap-4">
+                              <div class="flex flex-col space-y-2">
+                                <label for="phonePrefix" class="block text-sm font-medium ">
+                                  {{myformSocialMedia.value.phonePrefix}}
+                                </label>
+                                <div class="relative">
+                                  <select formControlName="phonePrefix" [ngClass]="inputClass(myformSocialMedia, 'phonePrefix')">
+                                    @for (item of countriesPhone(); track item) {
+                                      <option value="{{item.phonePrefix}}">{{item.name}}
+                                      </option>
+                                    }
+                                  </select>
+                                </div>
+                              </div>
+                              <div class="flex flex-col space-y-2">
+                                <label for="phone" class="block text-sm font-medium ">{{'phone' |
+                                translate}}</label>
+                                <input formControlName="phone" id="text" [ngClass]="inputClass(myformSocialMedia, 'phone')" />
+                              </div>
+                            </fieldset>
+                          }
+
+                          @if (myformSocialMedia.get('type')!.value == 'website') {
+                            <fieldset class="space-y-2">
+                              <label for="title" class="block text-sm font-medium ">
+                                {{'title' | translate}}
+                              </label>
+                              <input formControlName="title" id="text" [ngClass]="inputClass(myformSocialMedia, 'title')" />
+                            </fieldset>
+                          }
+
+                          @if (myformSocialMedia.get('type')!.value !== 'WhatsApp' && myformSocialMedia.get('type')!.value !== 'website') {
+                            <fieldset
+                              class="space-y-2">
+                              <label for="username" class="block text-sm font-medium ">
+                                {{'username' | translate}}
+                              </label>
+                              <input formControlName="username" id="text" placeholder="username"
+                                [ngClass]="inputClass(myformSocialMedia, 'username')" />
+                              </fieldset>
+                            }
+
+                            @if (myformSocialMedia.get('type')!.value !== 'WhatsApp' && myformSocialMedia.get('type')!.value === 'website') {
+                              <fieldset
+                                class="space-y-2">
+                                <label for="link" class="block text-sm font-medium ">
+                                  {{'pagelink' | translate}}
+                                </label>
+                                <input formControlName="link" id="text" placeholder="https://page.com/username"
+                                  [ngClass]="inputClass(myformSocialMedia, 'link')" />
+                                </fieldset>
+                              }
+
+                              <fieldset class="space-y-2">
+                                @if(myformSocialMedia.valid && myformSocialMedia.get('link')!.value) {
+                                  <a target="_blank" [href]="myformSocialMedia.get('link')!.value" target="_blank"
+                                    [ngClass]="myformSocialMedia.valid ? 'text-green-500 dark:text-green-400' : ' text-red-500 dark:text-red-400'"
+                                    class="flex justify-start items-center space-x-1 py-0 pr-2 hover:underline">
+                                    {{myformSocialMedia.get('link')!.value | truncate:45}}
+                                  </a>
+                                } @else {
+                                  <span
+                                    [ngClass]="myformSocialMedia.valid ? 'text-green-500 dark:text-green-400' : ' text-red-500 dark:text-red-400'">
+                                    {{'https://yuvinka.com/username' | translate}}
+                                  </span>
+                                }
+                              </fieldset>
+
+                              <fieldset class="flex justify-center space-x-5 mt-5">
+                                <button type="button" (click)="onCloseModal()" [ngClass]="buttonSecondaryClass()">
+                                  {{'discard' | translate}}
+                                </button>
+                                @if (socialMediaId()) {
+                                  <button type="submit" [ngClass]="buttonClass()" [disabled]="myformSocialMedia.status != 'VALID'">
+                                    <span class="font-semibold text-sm">{{ "update" | translate }}</span>
+                                  </button>
+                                } @else {
+                                  <button type="submit" [ngClass]="buttonClass()" [disabled]="myformSocialMedia.status != 'VALID'">
+                                    <span class="font-semibold text-sm">{{ "save" | translate }}</span>
+                                  </button>
+                                }
+                              </fieldset>
+                            </form>
+
+                            <div
+                              class="hidden mt-4 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 font-mono text-[11px] leading-relaxed">
+
+                              <!-- Estado y Valores -->
+                              <div class="mb-2 pb-2 border-b border-zinc-800">
+                                <span class="text-zinc-500">STATUS:</span>
+                                <span [class]="myformSocialMedia.valid ? 'text-green-500' : 'text-red-500'" class="font-bold ml-1">
+                                  {{ myformSocialMedia.status }}
+                                </span>
+                              </div>
+
+                              <!-- JSON de Valores -->
+                              <pre class="text-sky-400/90 mb-2">{{ myformSocialMedia.value | json }}</pre>
+
+                              <!-- Lista de Errores (Solo si es inválido) -->
+                              @if (myformSocialMedia.invalid) {
+                                <div class="pt-2 text-zinc-400">
+                                  <div class="text-red-400 font-bold mb-1 underline">ERRORES:</div>
+                                  <ul class="list-none space-y-1">
+                                    @for (control of myformSocialMedia.controls | keyvalue; track control.key) {
+                                      @if (control.value.invalid) {
+                                        <li>
+                                          <b class="text-zinc-200">{{ control.key }}:</b>
+                                          <span class="text-red-300"> {{ control.value.errors | json }}</span>
+                                        </li>
+                                      }
+                                    }
+                                  </ul>
+                                </div>
+                              }
+                            </div>
+
+                          </section>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- tags  -->
+                    <fieldset [ngClass]="cardClass()" class="w-full hidden break-inside-avoid   p-2 sm:p-4">
+
+                      <div class="flex justify-between">
+                        <div>
+                          <h4 class="text-lg font-semibold ">{{'tags' | translate}}</h4>
+                          <h5 class="text-zinc-700 dark:text-zinc-400 text-sm">{{'createTextTag' | translate}}</h5>
+                        </div>
+                      </div>
+                      @if (this.authService.user()!) {
+                        <div>
+                          <div class="flex justify-center mt-5">
+                            <button (click)="onAddButtonTag()" [ngClass]="buttonClass()">
+                              <span class="font-semibold text-sm">{{ "addTag" | translate }}</span>
+                            </button>
+                          </div>
+                        </div>
+                      }
+
+                      @if (authService.user()?.Tag?.length! > 0) {
+                        <ul
+                          class="w-full divide-y divide-zinc-200 dark:divide-zinc-700/50 break-inside-avoid  rounded  dark:text-zinc-200  mt-4">
+                          @for (item of authService.user()?.Tag; track item) {
+                            <li class="flex justify-between py-2">
+                              <div
+                                class="flex justify-center items-center space-x-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2 shadow-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer">
+                                <i appIcon iconName="loyalty-regular" [size]="'w-8 h-8'" [color]="'text-blue-500'"></i>
+                                <span class=" text-md font-semibold">{{item.name}}</span>
+                              </div>
+                              <div>
+              <button (click)="onDeleteTag(item._id!)" class="cursor-pointer flex justify-center items-center w-10 h-10 border border-transparent 
+         bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+         text-white shadow-md hover:shadow-lg transition-all duration-300 ease-in-out 
+         rounded-full transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-400">
+                                  <i appIcon iconName="delete-regular" [size]="'w-6 h-6'" [color]="'text-white'"></i>
+                                </button>
+                              </div>
+                            </li>
+                          }
+                        </ul>
+                      }
+
+                    </fieldset>
+
+                    @if (dialogService.activeModal() === 'tag') {
+                      <div [ngClass]="modalClass()" (click)="onCloseModal()">
+                        <div [ngClass]="cardModalClass()" class="w-full max-w-xl overflow-hidden" (click)="($event.stopPropagation())"
+                          @flyInOut>
+                          <section class="p-2 sm:p-4 overflow-y-auto max-h-[80vh]">
+                            <div class="flex justify-between">
+                              <h4 class="text-lg font-semibold">{{'Tag' | translate}}</h4>
+                            </div>
+
+                            <form [formGroup]="myformTag" (submit)="onSubmitTag($event)" novalidate class="px-2 sm:px-0 mt-4">
+
+                              <fieldset class="mb-4 grid grid-cols-1 gap-4">
+                                <div class="flex flex-col">
+                                  <input formControlName="tag" id="text" placeholder="tag" [ngClass]="inputClass(myformTag, 'tag')"
+                                    maxlength="20" />
+                                  </div>
+                                </fieldset>
+
+                                <fieldset class="flex justify-center space-x-5 mt-5">
+                                  <button type="button" (click)="onCloseModal()" [ngClass]="buttonSecondaryClass()">
+                                    {{'discard' | translate}}
+                                  </button>
+                                  <button type="submit" [ngClass]="buttonClass()" [disabled]="myformTag.status != 'VALID'">
+                                    <span class="font-semibold text-sm">{{ "save" | translate }}</span>
+                                  </button>
+                                </fieldset>
+                              </form>
+                            </section>
+                          </div>
+                        </div>
+                      }
+
+                      <pre class="hidden">{{myformTag.value | json}}</pre>
+                      <!-- end tag -->
+
+                    </div>
+                  </div>
+                </section>
+
+              }

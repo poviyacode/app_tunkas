@@ -1,0 +1,11 @@
+{
+  "/apiCloudflare": {
+    "target": "https://api.cloudflare.com",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/apiCloudflare": ""
+    }
+  }
+}

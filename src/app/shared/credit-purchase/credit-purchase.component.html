@@ -1,0 +1,104 @@
+@if (dialogService.activeModal() === 'creditPurchase') {
+<div [ngClass]="modalClass()" class="modal-center" (click)="onCloseModal()">
+  <div [ngClass]="cardModalClass()" class="w-full max-w-xl overflow-hidden" (click)="($event.stopPropagation())"
+    @flyInOut>
+    <section class="p-2 sm:p-4 overflow-y-auto max-h-[80vh]">
+
+      <div class="flex justify-between items-center py-2 relative">
+        <h2 class="text-lg font-bold absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+          <i appIcon iconName="gift-regular" [size]="'w-6 h-6'" [color]="'text-primary-500'"></i>
+          <span class="text-xl whitespace-nowrap">
+            {{ 'getCoins' | translate }}
+          </span>
+        </h2>
+
+        <button (click)="onCloseModal()"
+          class="cursor-pointer ml-auto relative z-10 flex justify-center items-center hover:bg-zinc-100 hover:dark:bg-zinc-700/30 rounded-full p-2 w-8 h-8">
+          <span appIcon iconName="close-regular" [size]="'w-6 h-6'" [color]="''"></span>
+        </button>
+      </div>
+
+      <form [formGroup]="myform" id="form" novalidate autocomplete="off" (ngSubmit)="onSubmit()" class="my-4">
+
+        <div class="grid grid-cols-1 gap-2">
+
+          @for (item of this.productCreditService.productCredits(); track $index) {
+          <label [ngClass]="{
+              'bg-green-100 dark:bg-green-700 border-green-500 dark:border-green-400': myform.get('selectCredit')?.value === item.credit,
+              'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700': myform.get('selectCredit')?.value !== item.credit
+            }"
+            class="flex items-center justify-between space-x-8 sm:space-x-16 border  p-2 rounded-lg cursor-pointer transition-all duration-300 ease-in-out shadow-md hover:shadow-lg">
+            <div class="flex items-center">
+              <input type="radio" formControlName="selectCredit" name="selectCredit" [value]="item.credit"
+                class="form-radio text-primary-600 absolute w-0 h-0 sr-only">
+              <span appIcon iconName="povicoin-solid" [size]="'w-6 h-6'" class="mr-3"></span>
+              <div>
+                <p class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                  {{ item.credit }} {{'coins' | translate}}</p>
+                <p [ngClass]="{
+                      'text-xs text-zinc-500 dark:text-zinc-400 font-medium': item.bonus === 0,
+                      'text-xs text-green-600 dark:text-green-400 font-medium': item.bonus !== 0
+                    }">
+                  {{'free' | translate}} {{item.bonus}}
+                </p>
+              </div>
+            </div>
+            <div>
+              <p class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                {{calculatePrice(item.credit!, item.bonus!) | number:'1.2-2' }}
+                {{item.Money?.iso}}
+                <!-- {{calculatePrice(item.credit!, item.bonus!) | number:'1.2-2' }} -->
+              </p>
+            </div>
+          </label>
+          }
+          <!-- Custom option -->
+          <label [ngClass]="{
+              'bg-green-100 dark:bg-green-700 border-green-500 dark:border-green-400': myform.get('selectCredit')?.value === 'custom',
+              'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700': myform.get('selectCredit')?.value !== 'custom'
+            }"
+            class="flex items-center justify-between space-x-8 sm:space-x-16 border p-2 rounded-lg cursor-pointer transition-all duration-300 ease-in-out  shadow-md hover:shadow-lg">
+            <div class="flex items-center">
+              <input type="radio" formControlName="selectCredit" name="selectCredit" value="custom"
+                class="form-radio text-primary-600 mr-3 absolute w-0 h-0 sr-only">
+              <span appCoinSvg size="w-6 h-6" class="mr-3"></span>
+              <div>
+                <p class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{'custom' | translate}}</p>
+                <p class="text-xs text-zinc-500 dark:text-zinc-200">{{'free' | translate}} {{bonus()}}</p>
+              </div>
+            </div>
+
+            <div class="relative">
+              <input formControlName="credit" id="credit" type="text" [ngClass]="inputClass(myform, 'credit')">
+              <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-200">
+                <span>{{ 'minimumBuyCoin' | translate: { x: 10.00, y: 500.00 } }}</span>
+              </div>
+            </div>
+          </label>
+
+        </div>
+
+        <!-- Mostrar total calculado -->
+        <div class="mt-4">
+          <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            {{ 'total' | translate }}: {{ totalPrice() | number:'1.2-2' }}
+            {{ money()?.iso || '' }}
+
+          </p>
+        </div>
+
+        <div class="flex justify-center items-center space-x-5 mt-6 font-semibold">
+          <button type="button" (click)="onCloseModal()" [ngClass]="buttonSecondaryClass()">
+            {{'cancel' | translate}}
+          </button>
+          <button type="submit" [disabled]="myform.status !== 'VALID'" [ngClass]="buttonClass()">
+            {{ 'Buy' | translate }}
+            <span appIcon iconName="credit-card-regular" [size]="'w-6 h-6'" [color]="''"></span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</div>
+}

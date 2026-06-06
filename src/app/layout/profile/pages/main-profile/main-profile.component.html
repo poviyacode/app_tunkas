@@ -1,0 +1,513 @@
+@if (isBrowser) {
+  <ng-container #container></ng-container>
+  <div class="mx-auto max-w-7xl ">
+
+    @let profile = userService.userProfile();
+    @let coverMedia = $safeNavigationMigration(profile?.Cover?.[0]);
+    @let profileMedia = $safeNavigationMigration(profile?.Profile?.[0]);
+
+    @if(profile && profile?.status === 'ACTIVE') {
+      <header class="sticky top-0 left-0 w-full z-10">
+        <div [ngClass]="{'text-zinc-50': isScrollAtTop, 'bg-background-light dark:bg-background-dark backdrop-blur-0 shadow-sm sm:shadow-none': !isScrollAtTop}"
+          class="flex justify-between items-center h-12 transition-background-color duration-300">
+          <div class="flex justify-between items-center px-2 w-full">
+            <div class="flex space-x-5 w-full ml-2 truncate">
+              <button (click)="goBack()" class="cursor-pointer flex justify-center items-center"
+                aria-label="Go back">
+                <span appIcon iconName="arrow-back-regular" [color]="''" [size]="'w-6 h-6'" class="pl-1"></span>
+              </button>
+
+              @if (userService.userProfile()) {
+                <button (click)="onScrollTop()" class="cursor-pointer flex flex-col justify-start w-full">
+                  <span class="lowercase text-base font-bold truncate text-left">
+                    {{ '@' + profile?.username }}
+                  </span>
+                  <div class="flex items-center space-x-1">
+                    @if (profile?.online) {
+                      <span class="bg-green-500 text-xs w-2 h-2 rounded-full"
+                      aria-label="User is online"></span>
+                    }
+                    @if (profile?.online) {
+                      <span class="text-xs font-semibold">{{ 'online' |
+                      translate }}</span>
+                    }
+                    @if (!profile?.online) {
+                      <span class="text-xs lowercase font-normal">
+                        {{ $safeNavigationMigration(profile?.onlineAt)! | dateAgo }}
+                      </span>
+                    }
+                  </div>
+                </button>
+              }
+            </div>
+
+            <nav class="flex justify-end items-center space-x-2 font-semibold text-sm px-3 w-fit"
+              aria-label="User navigation">
+
+              @if (isScrollAtTop && getRoles('CREATOR')) {
+                @if (count) {
+                  <a routerLink="/{{slug}}/photos" class="flex items-center space-x-1" aria-label="View photos">
+                    <span appIcon iconName="photo-camera-regular" [color]="''" [size]="'w-6 h-6'"></span>
+                    <span>{{ count?.countPhotos }}</span>
+                  </a>
+                  <a routerLink="/{{slug}}/videos" class="flex items-center space-x-1" aria-label="View videos">
+                    <span appIcon iconName="movie-regular" [color]="''" [size]="'w-6 h-6'"></span>
+                    <span>{{ count?.countVideos }}</span>
+                  </a>
+                }
+              }
+
+              @if (count && !isScrollAtTop) {
+                <div class="flex font-semibold text-sm w-fit">
+
+                  @if (authService.user() && authService.user()!._id != userService.userProfile()!._id) {
+                    <button (click)="onChat()" aria-label="Start chat"
+                      class="cursor-pointer w-9 h-9 flex justify-center items-center rounded-full hover:bg-primary-50 dark:hover:bg-primary-800/10">
+                      <span appIcon iconName="messages-regular" [color]="''" [size]="'w-6 h-6'"></span>
+                    </button>
+
+                    <button (click)="onTip()" aria-label="Send tip"
+                      class="cursor-pointer w-9 h-9 flex justify-center items-center rounded-full hover:bg-primary-50 dark:hover:bg-primary-800/10">
+                      <span appIcon iconName="gift-regular" [color]="''" [size]="'w-6 h-6'"></span>
+                    </button>
+                  }
+
+                  <button (click)="share()" aria-label="Share profile"
+                    class="cursor-pointer w-9 h-9 flex justify-center items-center rounded-full hover:bg-primary-50 dark:hover:bg-primary-800/10">
+                    <span appIcon iconName="share-regular" [color]="''" [size]="'w-6 h-6'"></span>
+                  </button>
+                </div>
+              }
+
+              @if (authService.user() && authService.user()!._id == userService.userProfile()!._id) {
+                    <button (click)="onMenuSiberDialog()" aria-label="Menu" class="ml-1 flex justify-center items-center w-10 h-10 rounded-full 
+                            bg-zinc-900 dark:bg-zinc-100 
+                            text-white dark:text-zinc-900 hover:text-white
+                            shadow-lg shadow-zinc-500/20 dark:shadow-black/40
+                            hover:bg-primary-500 dark:hover:bg-primary-500 
+                            transition-all duration-300 active:scale-90 group">
+                  <span appIcon iconName="menu-regular" [size]="'w-5 h-5'" [color]="''"
+                    class=" transition-colors">
+                  </span>
+                </button>
+              }
+            </nav>
+
+          </div>
+        </div>
+      </header>
+
+      <!-- cover -->
+      <section
+        class="-mt-12 w-full {{userService.userProfile() ? 'bg-background-light dark:bg-background-dark text-zinc-800 dark:text-zinc-200' : ''}} overflow-hidden">
+
+        <div class="relative w-full h-64 sm:h-80 md:h-[400px] overflow-hidden">
+
+          @if (coverMedia) {
+            @let mediaDetails = getMediaDetails(coverMedia);
+
+            <div class="absolute inset-0">
+              <div class="w-full h-full bg-cover bg-center scale-110 blur-2xl opacity-70"
+                [style.background-image]="'url(' + mediaDetails?.url + ')'">
+              </div>
+              <div class="absolute inset-0 bg-black/40"></div>
+            </div>
+
+            <div class="relative w-full h-full flex justify-center items-center">
+              <img [src]="$safeNavigationMigration(mediaDetails?.url)" [alt]="profile?.username || profile?.alias"
+                class="max-w-full h-full object-contain fade-edges-mask" />
+                <div
+                  class="absolute inset-x-0 bottom-0 h-1/3 sm:h-1/2 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent">
+                </div>
+              </div>
+
+            } @else {
+              <div class="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950">
+                <div class="w-full h-full flex items-center justify-center opacity-20"></div>
+              </div>
+            }
+          </div>
+
+        </section>
+
+        <!-- profile -->
+        <section class="relative px-4">
+          <div class="relative -mt-36 md:-mt-48 flex flex-row md:flex-row md:items-center justify-between gap-4">
+
+            <div class="relative inline-block">
+              <button (click)="onProfile()" class="group relative block">
+                @let profileDetails = getMediaDetails(profileMedia);
+
+                    <div [ngClass]="{
+                                'ring-[#ff0050] animate-pulse': profile.live,
+                                'ring-green-500': profile.online && !profile.live,
+                                'ring-zinc-200 dark:ring-zinc-800': !profile.online && !profile.live
+                            }"
+                  class="w-32 h-32 md:w-44 md:h-44 rounded-full p-1 bg-background-light dark:bg-background-dark ring-4 shadow-2xl overflow-hidden">
+
+                  @if (userService.userProfile()!.Profile!.length > 0) {
+                    <img class="w-full h-full object-cover rounded-full" [src]="$safeNavigationMigration(profileDetails?.url)" />
+                  } @else {
+                    <div
+                      class="w-full h-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-4xl font-bold rounded-full text-zinc-400">
+                      {{ getFirstLetter(profile.alias!! ||
+                      profile.username!!)}}
+                    </div>
+                  }
+                </div>
+
+                @if (profile.live) {
+                  <div
+                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#ff0050] text-white text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg">
+                    LIVE
+                  </div>
+                }
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2 pb-2">
+              @if (isCurrentUser()) {
+                <button (click)="onEditProfile()"
+                  class="flex items-center gap-2 px-6 py-2.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-sm transition-all hover:opacity-90 active:scale-95">
+                  <i appIcon iconName="edit-regular" [size]="'w-4 h-4'" [color]="''"></i>
+                  {{'editProfile' | translate}}
+                </button>
+              }
+
+              @if (authService.user() && authService.user()!._id != userService.userProfile()!._id) {
+                <button (click)="checkIfUserFollows() ? onUnfollowUser() : onFollowUser()"
+                  class="p-3 rounded-full shadow-md transition-all active:scale-90 {{checkIfUserFollows() ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-white' : 'bg-primary-500 text-white'}}">
+                  <i appIcon [iconName]="checkIfUserFollows() ? 'favorite-solid' : 'favorite-regular'"
+                  [size]="'w-6 h-6'" [color]="''"></i>
+                </button>
+
+                <button (click)="onTip()"
+                  class="p-3 rounded-full bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700 active:scale-90">
+                  <i appIcon iconName="gift-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                </button>
+
+                <button (click)="onChat()"
+                  class="hidden p-3 rounded-full bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700 active:scale-90">
+                  <i appIcon iconName="messages-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                </button>
+
+                <button (click)="requestJoinCall()"
+                  class="p-3 rounded-full bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700 active:scale-90">
+                  <i appIcon iconName="duo-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                </button>
+              }
+
+              <button (click)="share()"
+                class="p-3 rounded-full bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700 active:scale-90">
+                <i appIcon iconName="share-regular" [size]="'w-6 h-6'" [color]="''"></i>
+              </button>
+
+            </div>
+          </div>
+
+          <div class="mt-6 space-y-1">
+            <div class="flex items-center gap-2">
+              <h2 class="text-3xl font-black tracking-tight">
+                {{ profile?.alias || profile?.username }}
+              </h2>
+            </div>
+          </div>
+
+
+          <div class="flex items-center gap-4 text-sm font-medium">
+            <p class="text-zinc-900 dark:text-zinc-100">
+              {{ countFollowers() || 0 | numberFormat }} <span class="text-zinc-500 font-normal">{{
+            'followers' | translate }}</span>
+          </p>
+          <div class="flex items-center gap-2 text-zinc-500">
+            @if (profile.Country) {
+              <span class="flex items-center gap-1">
+                <i appIcon iconName="location-on-regular" [size]="'w-3 h-3'" [color]="''"></i>
+                {{profile.Country.name}}
+              </span>
+            }
+
+            <span>•</span>
+            <span class="lowercase">
+              {{ 'yearsOld' | translate: { age: profile.age || 18 |calculateAge } }}
+            </span>
+
+          </div>
+        </div>
+
+        <div class="max-w-2xl pt-3">
+          @if (profile.bio) {
+            <div [class.line-clamp-2]="!showFullText()" class="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed"
+              [innerHTML]="getSafeHtml(profile.bio!)">
+            </div>
+            <button (click)="toggleText()" class="text-xs font-bold text-primary-500 mt-1 uppercase tracking-wider">
+              {{ showFullText() ? ('read.less' | translate) : ('read.more' | translate) }}
+            </button>
+          }
+        </div>
+
+      </section>
+
+      @if (profile && getRoles('CREATOR')) {
+        <section class="relative px-4">
+
+          <!-- Social Media -->
+          @if (!loading() && otherSocialMedia().length > 0) {
+            <div class="flex flex-wrap gap-3 mt-4">
+              @for (item of otherSocialMedia(); track item._id || $index) {
+                <a [href]="item.link" target="_blank"
+                  class="group flex items-center gap-2.5 py-2 px-4 rounded-full bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300">
+
+                  <div class="flex-shrink-0 transition-transform group-hover:scale-110">
+                    <img [src]="getModifiedIconPath(item.type)" [alt]="item.type" class="w-5 h-5 object-contain" />
+                  </div>
+
+                  <span
+                    class="text-xs font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
+                    {{ item.type }}
+                  </span>
+                </a>
+              }
+            </div>
+          }
+
+          <!-- Websites -->
+          @if (!loading() && websites().length > 0) {
+            <div class="flex flex-wrap gap-3 mt-2">
+              @for (item of websites(); track item._id || $index) {
+                <a [href]="item.link" target="_blank"
+                  class="group relative flex items-center py-1 px-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1">
+
+                  <span
+                    class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {{ (item.title || 'website') | translate }}
+                  </span>
+                </a>
+              }
+            </div>
+          }
+
+          <!-- <hr class="my-8 border-zinc-200 dark:border-zinc-800" /> -->
+
+          @if (bundlesMembership() && profile.Membership?.length! > 0) {
+            <div class="mb-0 mt-6">
+              <div class="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-2">
+                @for (plan of profile.Membership; track $index) {
+                  <button (click)="onSubmitBundles(plan)"
+                    class="group relative overflow-hidden p-2 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-povicoin transition-all duration-300 shadow-sm hover:shadow-xl hover:-translate-y-1">
+                    @if (plan.discount! > 0) {
+                      <div
+                        class="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+                        -{{ plan.discount }}%
+                      </div>
+                    }
+                    <div class="flex flex-col items-center">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-3xl font-black">{{ plan.credit }}</span>
+                        <span appIcon iconName="povicoin-solid" [size]="'w-8 h-8'" class="text-povicoin"></span>
+                      </div>
+                      <div class="hidden text-lg font-bold text-zinc-700 dark:text-zinc-300">
+                        {{ ($safeNavigationMigration(transactionCreditService.creditCalculator()?.priceCoinUnitBuyParallel)! *
+                        plan.credit!) | number:'1.2-2' }} USD
+                      </div>
+                      <div class="text-[10px] text-zinc-500 uppercase font-bold mt-1">
+                        {{ $index === 0 ? ('for1Month' | translate) : ('forMonths' | translate: { value:
+                        ($index === 1 ? 3 : 6) }) }}
+                      </div>
+                    </div>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (daysDiffMembership()) {
+            <div class="flex justify-center my-6">
+              <button (click)="logoutToPrivate()" [ngClass]="buttonClass()"
+                class="w-full md:w-auto px-8 py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95">
+                <i appIcon iconName="lock-regular" [size]="'w-6 h-6'"></i>
+                <span class="font-bold">{{ 'viewPrivateContent' | translate }}</span>
+              </button>
+            </div>
+          }
+
+          <div
+            class="sticky top-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
+            <div class="flex justify-center gap-10 py-4">
+              <div class="flex items-center gap-2 group cursor-pointer">
+                <i appIcon iconName="photo-camera-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                <span class="text-sm font-bold">{{ count?.countPhotos || 0 }}</span>
+              </div>
+              <div class="flex items-center gap-2 group cursor-pointer">
+                <i appIcon iconName="movie-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                <span class="text-sm font-bold">{{ count?.countVideos || 0 }}</span>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      } @else if (profile && getRoles('CLIENT')) {
+        <section class="max-w-md mx-auto mt-5 px-4">
+
+          @if (daysDiffMembership()) {
+            <div class="flex justify-center my-6">
+              <button (click)="logoutToPrivate()" [ngClass]="buttonClass()"
+                class="w-full md:w-auto px-8 py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95">
+                <i appIcon iconName="lock-regular" [size]="'w-6 h-6'"></i>
+                <span class="font-bold">{{ 'viewPrivateContent' | translate }}</span>
+              </button>
+            </div>
+          }
+
+          <div class="grid gap-4">
+            @for (item of profile?.SocialMedia; track $index) {
+              @if (item.type && item.link) {
+                <a [href]="item.link" target="_blank"
+                  class="group relative flex items-center p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1">
+
+                  @if(item.type !== "website") {
+                    <div
+                      class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
+                      <img [src]="getModifiedIconPath(item.type)" [alt]="item.type" class="w-7 h-7 object-contain" />
+                    </div>
+
+                    <div class="ml-4 flex-grow">
+                      <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100">{{ item.type }}</h3>
+                    </div>
+                  } @else if (item.type === "website") {
+                    <div class="p-3 flex-grow">
+                      <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                        {{ item.title || item.link | truncate:20 }}
+                      </h3>
+                    </div>
+                  }
+
+                  <div class="text-zinc-300 dark:text-zinc-700 group-hover:text-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </a>
+              }
+            }
+          </div>
+        </section>
+      }
+      <section class="mt-5 mb-20">
+        <router-outlet></router-outlet>
+      </section>
+    }
+
+    @if(!loading() && profile?.status === 'SUSPENDED') {
+      <section
+        class="absolute h-screen w-full  inset-0 flex flex-col items-center justify-center text-center px-4 bg-background-light dark:bg-background-dark">
+        <div class="text-3xl font-semibold mb-2">{{'imSorry' | translate}} 😟</div>
+        <h3 class="text-xl font-semibold mb-5">{{'accountSuspended' | translate}}</h3>
+        <a routerLink="/" class="text-sm font-semibold text-primary-500 hover:text-primary-500">
+          {{'return' | translate}}
+        </a>
+      </section>
+    }
+
+    @if(loading()) {
+      <section
+        class="h-svh w-full  inset-0 flex flex-col items-center justify-center text-center px-4 bg-background-light dark:bg-background-dark">
+        <div class="flex justify-center items-center space-x-2 h-full">
+          <span class="relative flex h-3 w-3">
+            <span
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-primary-500"></span>
+          </span>
+
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"
+            style="animation-delay: 150ms;"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-primary-800"></span>
+          </span>
+
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"
+            style="animation-delay: 300ms;"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-700"></span>
+          </span>
+        </div>
+      </section>
+    }
+
+    @if(!loading() && !userService.userProfile()) {
+      <section
+        class="absolute h-screen w-full  inset-0 flex flex-col items-center justify-center text-center px-4 bg-background-light dark:bg-background-dark">
+        <div class="text-3xl font-semibold mb-2">{{'imSorry' | translate}} 😟</div>
+        <h3 class="text-xl font-semibold mb-5">{{'thisPageIsNotAvailable' | translate}}</h3>
+        <div class="text-base mb-2 text-center">{{'theLinkYouFollowedMayBeBroken' | translate}}</div>
+        <a routerLink="/" class="text-sm font-semibold text-primary-500 hover:text-primary-500">
+          {{'return' | translate}}
+        </a>
+      </section>
+    }
+
+    <!-- chat -->
+    @if (authService.user() && userService.userProfile() && authService.user()!._id !== userService.userProfile()!._id)
+      {
+      <section class="fixed bottom-16 right-6 md:right-16 z-50 flex flex-col items-end gap-2">
+
+        <div
+          class="pointer-events-none mb-2 mr-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 lg:opacity-100">
+          <span class="rounded-lg bg-zinc-900/80 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">
+            {{'chatWithMe' | translate}} 👋
+          </span>
+        </div>
+
+        <button (click)="onChat()" class="group relative flex items-center justify-center p-1 focus:outline-none">
+
+          @if(userService.userProfile()!.online) {
+            <span
+            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-20 duration-1000"></span>
+          }
+
+          <div
+            class="relative flex h-14 items-center gap-0 overflow-hidden rounded-full bg-white pl-1 shadow-xl shadow-green-500/20 ring-1 ring-zinc-100 transition-all duration-300 ease-in-out hover:w-auto hover:gap-3 hover:pl-1 hover:pr-6 dark:bg-zinc-800 dark:ring-zinc-700 w-14 lg:w-auto lg:gap-3 lg:pr-6">
+
+            <div class="relative h-12 w-12 shrink-0 rounded-full border-2 border-white dark:border-zinc-700">
+              @if (userService.userProfile()!.Profile && userService.userProfile()!.Profile!.length > 0) {
+                <img [src]="getProfileImageUrl(userService.userProfile()!)"
+                  class="h-full w-full rounded-full object-cover" alt="User">
+                } @else {
+                  <div
+                    class="flex h-full w-full items-center justify-center rounded-full bg-green-100 text-green-600 font-bold">
+                    {{ getFirstLetter($safeNavigationMigration(profile?.username)!) }}
+                  </div>
+                }
+
+                <div class="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-white shadow-sm ring-2 ring-white dark:ring-zinc-800 transition-colors duration-300"
+                        [ngClass]="{
+                            'bg-green-500': $safeNavigationMigration(userService.userProfile()?.online),
+                            'bg-red-500': !userService.userProfile()?.online
+                        }">
+                  <i appIcon iconName="messages-solid" [size]="'w-3.5 h-3.5'" [color]="''"></i>
+                </div>
+              </div>
+
+              <div
+                class="flex-col items-start justify-center overflow-hidden transition-all hidden lg:flex group-hover:flex">
+                <span class="text-sm font-bold text-zinc-800 dark:text-zinc-100 leading-tight">
+                  {{'sendMessage' | translate}}
+                </span>
+                <span class="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 leading-tight">
+                  @if(userService.userProfile()!.online) {
+                    <span class="text-green-500">● {{'onlineNow' | translate}}</span>
+                  } @else {
+                    {{'respondsQuickly' | translate}}
+                  }
+                </span>
+              </div>
+
+            </div>
+          </button>
+        </section>
+      }
+      <!-- methos payment -->
+    </div>
+  }

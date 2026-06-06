@@ -1,0 +1,440 @@
+<ng-container #container></ng-container>
+<div
+    class="relative w-full h-full bg-zinc-950/60 overflow-hidden font-sans select-none text-white transition-colors duration-300">
+
+    <div class="absolute inset-0 z-0">
+        @let liveStream = liveStreamService.liveStream();
+        @let liveStreamCapture = $safeNavigationMigration(liveStream?.LiveCaptureMedia?.[0]);
+
+        <div class="w-full h-screen relative bg-gradient-to-tr from-zinc-950 via-purple-950/10 to-zinc-950"
+            [style.background-image]="'url(' + getMediaDetails(liveStreamCapture)?.url + ')'"
+            [attr.key]="liveStreamService.liveStream()?._id"
+            style="background-repeat: no-repeat; background-size: cover; background-position: center;">
+
+            <div class="absolute inset-0 flex justify-center items-center z-0">
+                <div id="local-video" #localVideo class="w-full h-full object-cover transition-all duration-500"
+                    [class.hidden]="!viewLocal()">
+                </div>
+                <div id="remote-video" #remoteVideo class="w-full h-full object-cover transition-all duration-500"
+                    [class.hidden]="!viewRemote()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="relative z-10 flex flex-col justify-between w-full h-full p-3 sm:p-4 pointer-events-none">
+
+        <div class="flex justify-between items-center w-full pointer-events-auto">
+            @let user = UserTransmiter();
+            @let hasProfile = $safeNavigationMigration(user?.Profile?.[0]);
+            <button (click)="onReturnProfile()"
+                class="bg-zinc-950/40 hover:bg-zinc-900/80 border border-white/5 backdrop-blur-md rounded-full flex items-center pr-3.5 transition-all duration-300 group shadow-md active:scale-95">
+                @if (hasProfile) {
+                <img class="w-8 h-8 object-cover rounded-full border border-white/20 transition-transform group-hover:scale-105"
+                    [src]="$safeNavigationMigration(getMediaDetails(hasProfile)?.url)" [alt]="$safeNavigationMigration(user?.alias)" />
+                } @else {
+                <div class="w-8 h-8 flex items-center justify-center text-[10px] font-black text-white uppercase">
+                    {{ getFirstLetter(user?.alias || user?.username || '') }}
+                </div>
+                }
+                <div class="ml-2 text-left min-w-0 max-w-[100px]">
+                    <h3
+                        class="text-xs font-black text-white truncate tracking-wide group-hover:text-pink-500 dark:group-hover:text-purple-400 transition-colors">
+                        {{ user?.alias }}
+                    </h3>
+                    @if (user?.live) {
+                    <span
+                        class="text-[8px] text-pink-600 dark:text-red-400 font-black flex items-center gap-0.5 tracking-wider">
+                        <span class="w-1 h-1 rounded-full bg-pink-500 dark:bg-red-500 animate-pulse mr-0.5"></span>LIVE
+                    </span>
+                    }
+                </div>
+            </button>
+
+            <div class="flex justify-end items-center space-x-1.5">
+                @if (role() === 'transmitter') {
+                <button (click)="findIncomeLive()"
+                    class="h-7 text-[10px] px-2.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 font-black text-amber-600 dark:text-amber-400 flex items-center space-x-1 transition-all shadow-md backdrop-blur-md active:scale-95">
+                    <i appIcon iconName="gift-regular" [size]="'w-3.5 h-3.5'" [color]="'text-amber-400'"
+                        class="mt-0.5"></i>
+                    <span class="font-mono tracking-tight">
+                        {{ transactionCreditService.transactionCreditIcomeLiveUserSum()?.sumCreditAmount || 0 }}
+                    </span>
+                </button>
+                }
+
+                @if (liveStream?.live) {
+                <div
+                    class="h-7 text-[10px] px-2.5 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 border border-white/20 backdrop-blur-md flex items-center transition-all duration-300 group shadow-md active:scale-95">
+                    <i appIcon iconName="user-regular" [size]="'w-3.5 h-3.5'" [color]="'text-zinc-100'"
+                        class="mt-0.5"></i>
+                    <span class="font-mono tracking-tight">{{ userList().length }}</span>
+                </div>
+
+                <div class="relative flex items-center justify-center">
+                    <button (click)="toggleMenu('more')" [class.bg-pink-500]="activeMenu() === 'more'"
+                        [class.border-pink-500]="activeMenu() === 'more'"
+                        class="w-7 h-7 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 border border-white/20 text-white flex justify-center items-center transition-all active:scale-95 shadow-sm backdrop-blur-md">
+                        <i appIcon iconName="ellipsis-vertical-regular" [size]="'w-3.5 h-3.5'"
+                            [color]="'text-zinc-100'"></i>
+                    </button>
+
+                    @if (activeMenu() === 'more') {
+                    <div @flyInOut
+                        class="menu-container absolute top-9 right-0 w-52 backdrop-blur-xl bg-white/90 dark:bg-zinc-900/80 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl p-1 z-50 origin-top-right">
+                        <ul class="space-y-0.5">
+                            @for (item of moreMenuItems; track item.label) {
+                            @if (item.visible) {
+                            <li>
+                                <button (click)="item.action(); activeMenu.set(null)"
+                                    class="w-full py-1.5 px-2.5 rounded-xl flex items-center space-x-2.5 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-900/5 dark:hover:bg-white/5 text-xs font-semibold transition-all">
+                                    <i appIcon [iconName]="item.icon" [size]="'w-3.5 h-3.5'"
+                                        [color]="item.color || 'text-zinc-600 dark:text-zinc-400'"></i>
+                                    <span [class]="item.color">{{ item.label | translate }}</span>
+                                </button>
+                            </li>
+                            }
+                            }
+                        </ul>
+                    </div>
+                    }
+                </div>
+
+                <div class="relative hidden items-center justify-center">
+                    <button (click)="toggleMenu('tools')" [class.bg-pink-500]="activeMenu() === 'tools'"
+                        [class.border-pink-500]="activeMenu() === 'tools'"
+                        class="w-7 h-7 rounded-full bg-white/40 dark:bg-zinc-950/40 hover:bg-white/60 dark:hover:bg-zinc-900/80 border border-zinc-200/50 dark:border-white/10 text-zinc-700 dark:text-white flex justify-center items-center transition-all active:scale-95 shadow-sm backdrop-blur-md">
+                        <i appIcon iconName="sliders-regular" [size]="'w-3.5 h-3.5'"
+                            class="text-zinc-600 dark:text-white"></i>
+                    </button>
+
+                    @if (activeMenu() === 'tools') {
+                    <div @flyInOut
+                        class="menu-container absolute top-9 right-0 w-52 backdrop-blur-xl bg-white/90 dark:bg-zinc-900/80 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl p-1 z-50 origin-top-right">
+                        <ul class="space-y-0.5">
+                            @for (item of toolsMenuItems; track item.label) {
+                            @if (item.visible) {
+                            <li>
+                                <button (click)="item.action(); activeMenu.set(null)"
+                                    class="w-full py-1.5 px-2.5 rounded-xl flex items-center space-x-2.5 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-900/5 dark:hover:bg-white/5 text-xs font-semibold transition-all">
+                                    <i appIcon [iconName]="item.icon" [size]="'w-3.5 h-3.5'"
+                                        [color]="item.color || 'text-zinc-400 dark:text-zinc-400'"></i>
+                                    <span [class]="item.color">{{ item.label | translate }}</span>
+                                </button>
+                            </li>
+                            }
+                            }
+                        </ul>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+
+        <div class="w-full flex flex-col md:flex-row md:items-end md:justify-between gap-4 mt-auto">
+
+            <div class="pointer-events-auto w-full max-w-sm transition-all duration-300">
+                @if (showComments) {
+                <div @chatAnimation
+                    class="flex flex-col h-96 sm:h-160 bg-zinc-950/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-3 mb-2">
+
+                    <div #messagesContainer (scroll)="onScroll()"
+                        class="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin custom-scrollbar-tiktok mask-scroller-gradient">
+                        @for (item of commentService.commentsLive(); track item.ID) {
+                        <div
+                            class="flex items-start space-x-2 bg-white/[0.02] border border-white/[0.02] rounded-xl p-2 animate-fade-in">
+                            @if (item.avatar) {
+                            <img class="w-6 h-6 rounded-full object-cover border border-white/10 flex-shrink-0"
+                                [src]="item.avatar" alt="Avatar" />
+                            } @else {
+                            <div
+                                class="w-6 h-6 rounded-full bg-zinc-800 border border-white/5 flex justify-center items-center flex-shrink-0">
+                                <i appIcon iconName="user-regular" [size]="'w-2.5 h-2.5'" class="text-zinc-500"></i>
+                            </div>
+                            }
+                            <div class="flex-1 text-[11px] min-w-0">
+                                <span class="font-bold text-purple-400 block mb-0.5 truncate">{{ item.name }}</span>
+                                <p class="text-zinc-200 font-normal leading-relaxed break-words">{{ item.content }}</p>
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="w-full relative mt-2 pt-2 border-t border-white/5">
+                        <form [formGroup]="myFormComment" id="form" novalidate autocomplete="off"
+                            (submit)="onSendBarrageMessage()" class="flex items-center space-x-2">
+                            <div
+                                class="flex-1 flex items-center bg-zinc-900/80 border border-white/10 focus-within:border-purple-500/50 rounded-full relative transition-all shadow-inner">
+                                <input type="text" formControlName="text" id="text" [maxlength]="100"
+                                    [placeholder]="'addComment' | translate"
+                                    class="w-full h-9 pl-4 pr-10 bg-transparent text-white text-xs font-medium placeholder-zinc-500 outline-none">
+
+                                <button type="button" (click)="toggleEmoji()"
+                                    class="absolute right-3 text-zinc-400 hover:text-white transition-colors focus:outline-none">
+                                    <i appIcon iconName="face-grin-regular" [size]="'w-4 h-4'"
+                                        [color]="'text-zinc-400'"></i>
+                                </button>
+                            </div>
+                        </form>
+
+                        @if (activeMenu() === 'emojiContainer') {
+                        <div @flyInOut
+                            class="emoji-container absolute bottom-12 left-0 right-0 backdrop-blur-xl bg-zinc-950/95 border border-white/10 rounded-2xl shadow-2xl p-2 z-50 origin-bottom-left text-white">
+                            <div (click)="$event.stopPropagation()"
+                                class="flex border-b border-white/5 mb-2 overflow-x-auto hide-scrollbar space-x-1 pb-1">
+                                @for (category of emojiCategories; track category; let i = $index) {
+                                <button (click)="selectTabEmoji(i)" [class.bg-purple-600]="emojiSelectedTab === i"
+                                    [class.text-white]="emojiSelectedTab === i"
+                                    [class.text-zinc-500]="emojiSelectedTab !== i"
+                                    class="px-2 py-0.5 rounded-md text-[10px] font-bold capitalize transition-all whitespace-nowrap">
+                                    {{ category }}
+                                </button>
+                                }
+                            </div>
+                            <div class="grid grid-cols-6 gap-1 h-32 overflow-y-auto pr-1 custom-scrollbar-tiktok">
+                                @for (emoji of emojis[emojiCategories[emojiSelectedTab]]; track emoji) {
+                                <span (click)="addEmoji(emoji)"
+                                    class="cursor-pointer text-base p-1 hover:bg-white/5 rounded-lg text-center transition-all transform hover:scale-110">
+                                    {{ emoji }}
+                                </span>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+                </div>
+                }
+            </div>
+
+            <div
+                class="pointer-events-auto flex items-center justify-center space-x-3 bg-zinc-950/40 backdrop-blur-md px-4 py-2 border border-white/5 rounded-2xl shadow-xl mx-auto md:mx-0 md:ml-auto">
+
+                @if (liveStreamService.liveStream()?.live && role() === 'audience') {
+                <button (click)="onTip()" type="button"
+                    class="w-10 h-10 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-white flex justify-center items-center transition-all shadow-md active:scale-95 group">
+                    <span appIcon iconName="povicoin-solid" [size]="'w-5 h-5'"
+                        [color]="'text-amber-400 group-hover:scale-110 transition-transform'"></span>
+                </button>
+                }
+
+                <button (click)="showComments = !showComments" [class.bg-purple-600]="showComments"
+                    [class.border-purple-500]="showComments"
+                    class="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 flex justify-center items-center transition-all active:scale-95 shadow-md">
+                    <i appIcon [iconName]="showComments ? 'chat-off-regular' : 'messages-regular'" [size]="'w-4 h-4'"
+                        [color]="'text-zinc-400'"></i>
+                </button>
+
+                <button (click)="onShareProfile()"
+                    class="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 flex justify-center items-center transition-colors shadow-md active:scale-95">
+                    <i appIcon iconName="share-regular" [size]="'w-4 h-4'" [color]="'text-zinc-400'"></i>
+                </button>
+
+                @if (role() === 'transmitter') {
+                <button (click)="onLogoutRoom()"
+                    class="w-12 h-10 rounded-2xl bg-red-600 hover:bg-red-700 border border-red-500/20 text-white flex justify-center items-center transition-all shadow-lg active:scale-95">
+                    <i appIcon iconName="call-end-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                </button>
+                } @else if (role() === 'audience') {
+                <button (click)="onReturnProfile()"
+                    class="w-12 h-10 rounded-2xl bg-red-600 hover:bg-red-700 border border-red-500/20 text-white flex justify-center items-center transition-all shadow-lg active:scale-95">
+                    <i appIcon iconName="logout-solid" [size]="'w-6 h-6'" [color]="''"></i>
+                </button>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@if (liveStreamService.liveStream()?.live && publisherStateNotification() === 'NO_PLAY' &&
+role() ===
+'audience')
+{
+<div class="fixed inset-0 flex items-center justify-center bg-zinc-950/60 backdrop-blur-md z-20 animate-fade-in">
+    <div
+        class="text-center p-6 bg-zinc-900/90 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl max-w-xs ring-1 ring-pink-500/30">
+        <div
+            class="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center mx-auto mb-3 border border-pink-500/30 animate-pulse">
+            <i appIcon iconName="pause-regular" [size]="'w-5 h-5'" [color]="'text-pink-400'"></i>
+        </div>
+        <p class="text-xs font-black tracking-wider uppercase text-zinc-700 dark:text-zinc-200">
+            {{ 'streamPaused' | translate }}
+        </p>
+    </div>
+</div>
+}
+
+@if (liveStreamService.liveStream() && !liveStreamService.liveStream()?.live && role() === 'audience') {
+<div
+    class="fixed inset-0 flex flex-col items-center justify-center bg-zinc-950/60 backdrop-blur-2xl z-20 transition-all">
+    <div
+        class="flex flex-col items-center p-8 bg-zinc-900/40 border border-white/10 rounded-3xl shadow-2xl w-80 text-center relative overflow-hidden backdrop-blur-md ring-1 ring-white/5">
+        <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-600/20 rounded-full blur-3xl">
+        </div>
+
+        @let user = $safeNavigationMigration(liveStreamService.liveStream()?.User);
+        @let hasProfile = $safeNavigationMigration(user?.Profile?.[0]);
+
+        <a [routerLink]="['/', $safeNavigationMigration(user?.username)]" class="relative mb-5">
+            @if (hasProfile) {
+            <div
+                class="w-32 h-32 rounded-full overflow-hidden p-[1.5px] bg-gradient-to-tr from-pink-500 via-purple-500 to-cyan-500 shadow-xl">
+                <img class="w-full h-full object-cover rounded-full border-2 border-zinc-950"
+                    [src]="$safeNavigationMigration(getMediaDetails(hasProfile)?.url)" alt="Profile" />
+            </div>
+            } @else {
+            <div
+                class="rounded-full w-32 h-32 bg-zinc-800 border border-zinc-300 dark:border-white/10 shadow-inner flex justify-center items-center text-zinc-400 dark:text-zinc-500">
+                <i appIcon iconName="user-regular" [size]="'w-8 h-8'" [color]="'text-zinc-100'"></i>
+            </div>
+            }
+            <span
+                class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap px-4 py-0.5 rounded-full bg-red-500/90 border border-red-400 text-white  uppercase tracking-widest text-[9px] font-black shadow-md backdrop-blur-sm">
+                {{ 'offline' | translate }}
+            </span>
+        </a>
+
+        <h4 class="text-white font-black text-lg tracking-tight">
+            {{ liveStreamService.liveStream()?.User?.alias || liveStreamService.liveStream()?.User?.username
+            }}
+        </h4>
+        <p
+            class="text-[11px] text-zinc-400 mt-2 font-bold bg-zinc-950/60 px-4 py-1.5 rounded-full border border-white/5 shadow-inner">
+            {{ 'theBroadcastHasEnded' | translate }}
+            <span class="text-purple-400 font-medium">
+                {{ $safeNavigationMigration(liveStreamService.liveStream()?.endedAt)! | dateAgo }}
+            </span>
+        </p>
+    </div>
+</div>
+}
+
+@if (this.transactionCreditService.transactionCreditsIncomeLiveUser() && dialogService.activeModal() ===
+'transactionCreditsReceivedModal') {
+<div [ngClass]="modalClass()" class="modal-center" (click)="dialogService.closeModal()">
+    <div [ngClass]="cardModalClass()" class="w-full max-w-xl overflow-hidden" (click)="($event.stopPropagation())"
+        @flyInOut>
+        <div class="p-4 text-white font-sans transition-colors duration-300">
+
+            <div
+                class="flex justify-between items-center pb-3 border-b border-zinc-200 dark:border-white/[0.08] relative">
+                <div class="flex items-center space-x-2.5">
+                    <div
+                        class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-600 to-cyan-500 p-[1.5px] shadow-lg shadow-pink-500/10 animate-pulse">
+                        <div
+                            class="w-full h-full bg-white dark:bg-zinc-950 rounded-[14px] flex items-center justify-center">
+                            <i appIcon iconName="gift-regular" [size]="'w-4 h-4'"
+                                [color]="'text-pink-500 dark:text-pink-400'"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-xs font-black tracking-wider uppercase text-zinc-500 dark:text-zinc-300">
+                            {{ 'giftsReceived' | translate }}
+                        </h2>
+                        <p class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 tracking-wide font-mono">
+                            {{ 'quantity ' | translate }}
+                            <span>{{ transactionCreditService.transactionCreditsIncomeLiveUser().length || 0 }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                @if (transactionCreditService.transactionCreditIcomeLiveUserSum()?.sumAmount) {
+                <div
+                    class="bg-gradient-to-r from-pink-500/10 to-cyan-500/10 dark:from-pink-500/15 dark:to-cyan-500/15 border border-zinc-200 dark:border-white/[0.08] px-3 py-1 rounded-full shadow-inner relative overflow-hidden group">
+                    <span
+                        class="font-mono font-black text-xs text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-zinc-800 to-cyan-600 dark:from-pink-400 dark:via-white dark:to-cyan-300 relative z-10 drop-shadow-sm">
+                        {{money()?.iso}}
+                        {{ transactionCreditService.transactionCreditIcomeLiveUserSum().sumAmount | number:'1.2-2' }}
+                    </span>
+                </div>
+                }
+            </div>
+
+            <div class="overflow-y-auto max-h-72 mt-3 space-y-2 pr-1 custom-scrollbar-tiktok">
+
+                @if (transactionCreditService.transactionCreditsIncomeLiveUser().length > 0) {
+                @for (item of transactionCreditService.transactionCreditsIncomeLiveUser(); track item._id) {
+
+                <div
+                    class="flex items-center justify-between p-2 rounded-xl bg-zinc-900/[0.04] dark:bg-white/[0.03] hover:bg-gradient-to-r hover:from-zinc-900/[0.08] hover:to-transparent dark:hover:from-white/[0.06] dark:hover:to-transparent border border-zinc-200/60 dark:border-white/[0.04] hover:border-zinc-300 dark:hover:border-white/[0.1] transition-all duration-300 shadow-sm group relative overflow-hidden active:scale-[0.99]">
+
+                    <div
+                        class="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-pink-500 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    </div>
+
+                    <div class="flex items-center space-x-2.5 min-w-0 pl-1">
+
+                        <div
+                            class="flex-shrink-0 w-8 h-8 rounded-full p-[1px] bg-gradient-to-tr from-cyan-400 to-pink-500 group-hover:rotate-180 transition-transform duration-700 shadow-md">
+                            <div
+                                class="w-full h-full rounded-full overflow-hidden border border-white dark:border-zinc-950 bg-zinc-100 dark:bg-zinc-900">
+                                @if (item?.Sender?.Profile?.length) {
+                                <img class="w-full h-full object-cover"
+                                    [src]="item.Sender?.Profile?.[0]?.cloudflare?.result?.variants?.[0] || item.Sender?.Profile?.[0]?.url"
+                                    alt="Avatar" />
+                                } @else {
+                                <div
+                                    class="flex items-center justify-center w-full h-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-950 text-cyan-600 dark:text-cyan-400 font-black text-[10px] uppercase tracking-wider">
+                                    <span>{{ getFirstLetter(item.Sender?.alias || item.Sender?.username || 'U')
+                                        }}</span>
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="min-w-0">
+                            <div class="font-black text-xs text-zinc-700 dark:text-zinc-100 truncate tracking-wide">
+                                {{ item.Sender?.alias || item.Sender?.username }}
+                            </div>
+                            @if (item.registerAt) {
+                            <div
+                                class="text-[9px] text-zinc-400 dark:text-zinc-400 font-bold tracking-tight uppercase flex items-center space-x-1">
+                                <span class="w-1 h-1 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>
+                                <span>{{ item.registerAt | dateAgo }}</span>
+                            </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex justify-center items-center space-x-1 bg-amber-500/10 dark:bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-500/20 dark:border-amber-400/20 group-hover:border-amber-500/40 dark:group-hover:border-amber-400/50 group-hover:bg-amber-500/20 dark:group-hover:bg-amber-400/20 transition-all duration-300 shadow-inner group-hover:scale-105">
+                        <span
+                            class="font-mono font-black text-xs text-amber-600 dark:text-amber-400 tracking-wider drop-shadow-[0_1px_1px_rgba(251,191,36,0.2)] dark:drop-shadow-[0_1px_2px_rgba(251,191,36,0.3)]">
+                            {{ item.creditAmount | number }}
+                        </span>
+                        <i appIcon iconName="povicoin-solid"
+                            class="text-amber-500 dark:text-amber-400 group-hover:rotate-12 transition-transform duration-300"
+                            [size]="'w-3.5 h-3.5'"></i>
+                    </div>
+
+                </div>
+                }
+                } @else {
+                <div
+                    class="py-12 flex flex-col items-center justify-center text-center bg-zinc-900/[0.01] dark:bg-white/[0.01] border border-zinc-200/60 dark:border-white/[0.04] rounded-2xl p-6 backdrop-blur-sm">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-zinc-900/[0.03] dark:bg-white/[0.03] border border-zinc-200 dark:border-white/[0.06] flex items-center justify-center mb-3 text-zinc-400 dark:text-zinc-500 relative">
+                        <i appIcon iconName="gift-regular" [size]="'w-5 h-5'"
+                            [color]="'text-zinc-400 dark:text-zinc-500 opacity-60'"></i>
+                        <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-pink-500 animate-ping"></span>
+                        <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+                    </div>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 font-bold tracking-wide">
+                        {{ 'noGiftsReceivedYet' | translate }}
+                    </p>
+                </div>
+                }
+            </div>
+
+            <button (click)="dialogService.closeModal()" [ngClass]="buttonClass()" class="mt-4 w-full">
+                {{ 'close' | translate }}
+            </button>
+
+        </div>
+    </div>
+</div>
+}

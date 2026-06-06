@@ -1,0 +1,125 @@
+<div class="mx-2 space-y-6">
+
+    <fieldset
+        class="break-inside-avoid p-6 border border-yellow-300 dark:border-yellow-700/50 bg-yellow-50 dark:bg-yellow-800/40 dark:text-yellow-200 rounded shadow-lg text-center">
+        <div class="flex items-center justify-center space-x-2 mb-4">
+            <i appIcon iconName="info-circle-regular" [size]="'w-6 h-6'"
+                [color]="'text-yellow-600 dark:text-yellow-400'"></i>
+            <h2 class="text-xl font-semibold text-yellow-800 dark:text-yellow-200">
+                {{'importantInformation' | translate}}
+            </h2>
+        </div>
+
+        <div class="p-4 border-2 border-dashed border-yellow-300 dark:border-yellow-500 rounded relative">
+            <!-- Etiqueta de Estado -->
+            <span
+                class="absolute -top-3 -right-3 px-2 py-0.5 bg-yellow-600 text-white text-xs font-semibold rounded-full shadow-md">
+                {{'withdrawal' | translate}}
+            </span>
+            <div class="flex items-center justify-center space-x-2 mb-2">
+                <!-- Icono de Documento de Identidad -->
+                <i appIcon iconName="attach-money-regular" [size]="'w-8 h-8'"
+                    [color]="'text-yellow-600 dark:text-yellow-400'"></i>
+                <span class="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
+                    {{ 'enterPaymentMethod' | translate }}
+                </span>
+            </div>
+            <p class="text-yellow-600 dark:text-yellow-400 text-sm">
+                <span>{{'depositProcessingInfo' | translate}}</span>
+            </p>
+        </div>
+    </fieldset>
+
+    <section aria-labelledby="airtm-section-title">
+        <div class="mb-6">
+            <h2 id="airtm-section-title" class="font-bold text-2xl">Airtm</h2>
+            <p class="text-zinc-600 dark:text-zinc-400 text-sm">
+                {{ 'enterEmailOrAirtmUser' | translate }}
+            </p>
+        </div>
+
+        <fieldset
+            class="w-full rounded {{ userTransferService.userTransfer()?.type === 'AIRTM' ? 'border border-green-400 dark:border-green-700 bg-green-50 dark:bg-green-800/40' : 'border border-zinc-200 dark:border-zinc-800/50 bg-white dark:bg-zinc-800/40' }} p-4 shadow-md"
+            aria-label="Form Airtm">
+            <legend class="sr-only">Airtm</legend>
+            <form [formGroup]="myFormAirtm" novalidate class="space-y-4">
+                <div class="flex flex-col">
+                    <label for="email" class="mb-1 font-semibold text-gray-700 dark:text-gray-300">
+                        {{ 'email' | translate }}
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <i class="fa-regular fa-envelope text-gray-500"></i>
+                        </div>
+                        <input formControlName="email" id="email" type="text" class="pl-10 lowercase"
+                            [ngClass]="inputClass(myFormAirtm, 'email')" />
+                    </div>
+                    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ 'messageAirTmInput' | translate }}
+                    </p>
+                </div>
+
+                <div class="text-center text-sm mt-4">
+                    <p class="text-zinc-600 dark:text-zinc-400">
+                        {{ 'noAccountAirTm' | translate }}
+                        <a href="https://app.airtm.com/ivt/rotsenadalid" target="_blank"
+                            class="text-primary-500 hover:underline ml-1 font-semibold">Airtm</a>
+                    </p>
+                </div>
+
+                <div class="flex justify-center mt-6">
+                    <button (click)="onSubmitAirtm()" [disabled]="myFormAirtm.status !== 'VALID'" type="submit"
+                        [ngClass]="buttonClass()">
+                        {{ this.userTransferService.userTransfer() ? ('update' | translate) : ('create' | translate) }}
+                    </button>
+                </div>
+            </form>
+        </fieldset>
+    </section>
+    <section aria-labelledby="airtm-section-title">
+        <div class="mb-6">
+            <h2 id="airtm-section-title" class="font-bold text-2xl ">PayPal</h2>
+            <p class="text-zinc-600 dark:text-zinc-400 text-sm">
+                {{ 'enterPayPalEmailOrUser' | translate }}
+            </p>
+        </div>
+
+        <fieldset
+            class="w-full rounded {{ userTransferService.userTransfer()?.type === 'PAYPAL' ? 'border border-green-400 dark:border-green-700 bg-green-50 dark:bg-green-800/40' : 'border border-zinc-200 dark:border-zinc-800/50 bg-white dark:bg-zinc-800/40' }} p-4 shadow-md"
+            aria-label="Form PayPal">
+            <legend class="sr-only">PayPal</legend>
+            <form [formGroup]="myFormPayPal" novalidate class="space-y-4">
+                <div class="flex flex-col">
+                    <label for="email" class="mb-1 font-semibold text-gray-700 dark:text-gray-300">
+                        {{ 'email' | translate }}
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <i class="fa-regular fa-envelope text-gray-500"></i>
+                        </div>
+                        <input formControlName="email" id="email" type="text" class="pl-10 lowercase"
+                            [ngClass]="inputClass(myFormPayPal, 'email')" />
+                    </div>
+                    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ 'mustEnterPayPalEmailOrUser' | translate }}
+                    </p>
+                </div>
+
+                <div class="text-center text-sm mt-4">
+                    <p class="text-zinc-600 dark:text-zinc-400">
+                        {{ 'noPayPalAccount' | translate }}
+                        <a href="https://www.paypal.com/signin" target="_blank"
+                            class="text-primary-500 hover:underline ml-1 font-semibold">PayPal</a>
+                    </p>
+                </div>
+
+                <div class="flex justify-center mt-6">
+                    <button (click)="onSubmitPayPal()" [disabled]="myFormPayPal.status !== 'VALID'" type="submit"
+                        [ngClass]="buttonClass()">
+                        {{ this.userTransferService.userTransfer() ? ('update' | translate) : ('create' | translate) }}
+                    </button>
+                </div>
+            </form>
+        </fieldset>
+    </section>
+</div>

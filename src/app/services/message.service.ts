@@ -1,0 +1,302 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, inject, computed, Signal } from '@angular/core';
+//import { Socket } from 'ngx-socket-io';
+import { Observable, catchError, delay, lastValueFrom, map, of, retry, tap, throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { Headers } from '../core/common/http-headers';
+import { Router } from '@angular/router';
+import { Message } from '@interfaces/message';
+import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc, setDoc, collectionData, FieldValue, serverTimestamp } from '@angular/fire/firestore';
+import { User } from '@interfaces/user';
+import { StorageService } from './storage.service';
+import Dexie from 'dexie';
+import { SocketService } from './socket.service';
+
+export interface resFindByChat {
+  currentDate: Date,
+  Messages: Message[]
+};
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MessageService {
+
+  apiUrl = `${environment.api}/message`;
+
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private firestore = inject(Firestore);
+  private storageService = inject(StorageService);
+  private socketService = inject(SocketService);
+
+  private messagesSignal = signal<Message[]>([]);
+  // private db = new Dexie('PoviyaDB') as Dexie & {
+  //   messages: Dexie.Table<Message, number>;
+  // };
+
+  constructor() {
+    // Configura el esquema de la base de datos
+    // this.db.version(1).stores({
+    //   messages: '++id, &_id, code, Chat._id, message, createdAt'
+    // });
+
+    // Carga los mensajes existentes al inicializar el servicio
+    this.loadMessagesFromDB();
+  }
+
+  create(data: any): Observable<Message> {
+    return this.http.post<Message>(this.apiUrl + '/', data, Headers.HttpOptions());
+  }
+
+  updateToRead(data: any): Observable<Message> {
+    return this.http.post<Message>(this.apiUrl + '/updateToRead/', data, Headers.HttpOptions());
+  }
+
+  remove(data: any): Observable<Message> {
+    return this.http.post<Message>(this.apiUrl + '/remove/', data, Headers.HttpOptions());
+  }
+
+  findByMessage(id: string): Observable<Message[]> {
+    return this.http.get<Message[]>(this.apiUrl + '/findByMessage/' + id, Headers.HttpOptions());
+  }
+
+  findOne(id: string): Observable<Message> {
+    return this.http.get<Message>(this.apiUrl + '/' + id, Headers.HttpOptions());
+  }
+
+  findByChat(id: string): Observable<resFindByChat | null> {
+    return this.http.get<resFindByChat>(`${this.apiUrl}/findByChat/${id}`, Headers.HttpOptions())
+      .pipe(
+        tap((res) => {
+          if (!res) return;
+
+          if (!this.socketService.socket) {
+            this.socketService.connect();
+          }
+
+          const roomName = `chat_${id}`;
+          this.socketService.joinRoom(roomName, (res) => {
+            if (res && res.status === 'joined') {
+              console.log('Socket joined room:', res.room);
+            }
+          });
+        }),
+        catchError((err) => {
+          return of(null);
+        })
+      );
+  }
+
+  sendMessageEmail(data: any): Promise<any> {
+    console.log('data', data)
+    return lastValueFrom(this.http.post<any>(this.apiUrl + '/sendMessageEmail/', data, Headers.HttpOptions()));
+  }
+
+  delete(id: any): Observable<any> {
+    return this.http.delete<any>(this.apiUrl + '/' + id);
+  }
+
+  // SIGNAL
+
+  // save messages
+  readonly messages = signal<Message[]>(this.storageService.loadFromStorage<Message[]>('messages', []));
+
+  addMessages(updatedMessages: Message[]) {
+    this.storageService.saveToStorage('messages', updatedMessages);
+    this.messages.set(updatedMessages);
+  }
+
+  updateMessages(id: string, updates: Partial<Message>) {
+    const current = this.storageService.loadFromStorage<Message[]>('messages', []);
+    const updated = current.map(item =>
+      (item._id === id || item.id === id || item.code === id) ? { ...item, ...updates } : item
+    );
+
+    this.messages.set(updated);
+    this.storageService.saveToStorage('messages', updated);
+  }
+
+  removeMessages(messageId: any) {
+    const currentMessages = this.storageService.loadFromStorage<Message[]>('messages', [])
+    const updatedMessages = currentMessages.filter(message => message._id !== messageId);
+    this.storageService.saveToStorage('messages', updatedMessages);
+    this.messages.set(updatedMessages);
+  }
+
+  resetMessages() {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem('messages');
+    }
+    this.messages.set([]);
+  }
+
+  // save chat
+  public readonly message = signal<Message | null>(this.storageService.loadFromStorage<Message | null>('message', null));
+
+  addMessage(value: Message) {
+    this.storageService.saveToStorage('message', value);
+    this.message.set(value);
+  }
+
+  updateMessage(updates: Partial<Message>) {
+    const currentMessage = this.message();
+    if (!currentMessage) return; // Si no hay usuario, salir
+
+    // Combinar los cambios con el usuario actual
+    const updatedMessage = {
+      ...currentMessage,
+      ...updates
+    };
+
+    // Actualizar la signal y el almacenamiento
+    this.message.set(updatedMessage);
+    this.storageService.saveToStorage('message', updatedMessage);
+  }
+
+  resetMessage() {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem('message');
+    }
+    this.message.set(null);
+  }
+
+  //--- signals
+  public readonly userReceiver = signal<User | null>(this.storageService.loadFromStorage<User | null>('userReceiver', null));
+
+  addUserReceiver(value: User) {
+    this.storageService.saveToStorage('userReceiver', value);
+    this.userReceiver.set(value);
+  }
+
+  updateUserReceiver(updates: Partial<User>) {
+    const currentUser = this.userReceiver();
+    if (!currentUser) return; // Si no hay usuario, salir
+
+    // Combinar los cambios con el usuario actual
+    const updatedUser = {
+      ...currentUser,
+      ...updates
+    };
+
+    // Actualizar la signal y el almacenamiento
+    this.userReceiver.set(updatedUser);
+    this.storageService.saveToStorage('userReceiver', updatedUser);
+  }
+
+  resetUserReceiver() {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem('userReceiver');
+    }
+    this.userReceiver.set(null);
+  }
+
+  //********************* firebase */ 
+  // Enviar mensaje
+  async sendMessageFire(data: any) {
+    const messagesRef = collection(this.firestore, 'messages');
+    return await addDoc(messagesRef, data);
+  }
+
+  async deleteMessageFire(messageId: string) {
+    const messageRef = doc(this.firestore, `messages/${messageId}`);
+    return await deleteDoc(messageRef);
+  }
+
+  getMessagesFire(chatId: string): Observable<any[]> {
+    return new Observable(observer => {
+      const messagesRef = collection(this.firestore, 'messages');
+
+      const q = query(messagesRef,
+        where('Chat', 'in', [chatId]),
+        orderBy('createdAt', 'asc')
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        observer.next(messages);
+      });
+
+      return () => unsubscribe();
+    });
+  }
+
+  async sendMessage11(chatId: string, data: any) {
+    //const chatId = [senderId, receiverId].sort().join('_');
+    const messagesRef = collection(this.firestore, `chats/${chatId}/messages`);
+
+    const currentDate = new Date();
+    const isoString = currentDate.toISOString();
+
+    await setDoc(doc(this.firestore, `chats/${chatId}`), {
+      lastMessage: data.message,
+      createdAt: isoString,
+      timestamp: new Date(),
+    }, { merge: true });
+
+    return await addDoc(messagesRef, {
+      ...data,
+      createdAt: isoString,
+      timestamp: new Date(),
+    });
+  }
+
+  async deleteMessage11(chatId: string, messageId: string) {
+    const messageRef = doc(this.firestore, `chats/${chatId}/messages/${messageId}`);
+    return await deleteDoc(messageRef);
+  }
+
+  // Obtener mensajes de un chat específico en tiempo real
+  getMessages11(chatId: string): Observable<any[]> {
+    //const chatId = [senderId, receiverId].sort().join('_');
+    return new Observable(observer => {
+      const messagesRef = collection(this.firestore, `chats/${chatId}/messages`);
+
+      const q = query(messagesRef,
+        orderBy('createdAt', 'asc')
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        observer.next(messages);
+      });
+
+      return () => unsubscribe();
+    });
+  }
+
+  // dexie
+  // Carga inicial de mensajes desde IndexedDB
+  private async loadMessagesFromDB() {
+    // const messages = await this.db.messages.toArray();
+    // this.messagesSignal.set(messages);
+  }
+
+  // Añade un mensaje (actualiza Signal y Dexie)
+  async addMessageDixe(message: Message) {
+    // const id = await this.db.messages.put(message);
+    // message.id = id; // Asigna el ID generado por Dexie
+    // this.messagesSignal.update(messages => [...messages, message]);
+  }
+
+  // Elimina un mensaje (actualiza Signal y Dexie)
+  async deleteMessage(messageId: number) {
+    // await this.db.messages.delete(messageId);
+    // this.messagesSignal.update(messages =>
+    //   messages.filter(m => m.id !== messageId)
+    // );
+  }
+
+  // Obtiene mensajes por chat (filtro reactivo)
+  messagesByChat(chatId: string): Signal<Message[]> {
+    return computed(() =>
+      this.messagesSignal().filter(m => m.Chat._id === chatId)
+    );
+  }
+
+  // Limpia todos los mensajes (Signal y Dexie)
+  async clearMessages() {
+    // await this.db.messages.clear();
+    // this.messagesSignal.set([]);
+  }
+}

@@ -1,0 +1,167 @@
+<article @cardAnimation
+    class="break-inside-avoid group h-full flex flex-col state-card-entry transform-gpu transition-all duration-500 hover:scale-[1.02] hover:z-20">
+    <div
+        class="relative h-[340px] md:h-[380px] lg:h-[400px] xl:h-[420px] 2xl:h-[440px] overflow-hidden rounded-[2rem] bg-black/40 backdrop-blur-xl border border-white/10 
+                shadow-2xl shadow-black/50 flex flex-col 
+                transition-all duration-500 hover:border-rose-500/40 hover:shadow-rose-500/20
+                before:absolute before:inset-0 before:rounded-[2rem] before:p-[1px] before:bg-gradient-to-r before:from-transparent before:via-rose-500/50 before:to-transparent 
+                before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500 before:pointer-events-none">
+
+        @let user = item();
+        @let hasProfile = $safeNavigationMigration(user?.Profile?.[0]);
+
+        <!-- Enlace a perfil con imagen -->
+        <a [routerLink]="['/', item().username]"
+            class="relative flex flex-col h-full w-full overflow-hidden rounded-[1.8rem] m-[2px] z-10 bg-gradient-to-br from-zinc-800 to-black">
+
+            <!-- Skeleton loader con shimmer más elegante -->
+            <!-- CORRECCIÓN: Solo se muestra el skeleton si tiene perfil y aún no ha cargado -->
+            @if (hasProfile && !imageLoaded()) {
+            <div class="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md">
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-rose-500/20 to-transparent">
+                    </div>
+                    <i appIcon iconName="heart-solid" [size]="'w-14 h-14'" [color]="'text-rose-500/30'"></i>
+                </div>
+            </div>
+            }
+
+            @if (hasProfile) {
+            <img [src]="$safeNavigationMigration(getMediaDetails(hasProfile)?.url)" (load)="imageLoaded.set(true)"
+                (error)="handleImageError($event)" [class.opacity-0]="!imageLoaded()"
+                [class.opacity-100]="imageLoaded()"
+                class="h-full w-full object-cover transition-all duration-1000 ease-out group-hover:scale-110 filter saturate-105 group-hover:saturate-125 brightness-90 group-hover:brightness-100"
+                alt="Profile">
+            } @else {
+            <div
+                class="flex h-full w-full items-center justify-center bg-gradient-to-tr from-rose-950/40 via-black to-amber-950/30">
+                <span
+                    class="text-7xl font-black opacity-40 tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-300 to-zinc-500 drop-shadow-2xl">
+                    {{ item().alias?.[0] || item().username?.[0] }}
+                </span>
+            </div>
+            }
+
+            <!-- Overlay moderno: degradado + blur sutil en hover -->
+            <div
+                class="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/80 to-transparent transition-opacity duration-500 pointer-events-none z-10">
+            </div>
+            <div
+                class="absolute inset-0 rounded-[1.8rem] ring-1 ring-white/0 transition-all duration-500 group-hover:ring-white/20 pointer-events-none">
+            </div>
+        </a>
+
+        <!-- Badges de estado: efecto neón + glass -->
+        <!-- CORRECCIÓN: Se muestra si no tiene perfil O si la imagen ya cargó -->
+        @if (item().live || item().online) {
+        <div class="absolute top-4 left-4 transition-all duration-500 z-30"
+            [class.opacity-0]="hasProfile && !imageLoaded()">
+            <div
+                [class]="item().live 
+                ? 'flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-xl border border-rose-500/50 px-4 py-1.5 shadow-[0_0_12px_rgba(244,63,94,0.6)]' 
+                : 'flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-xl border border-emerald-500/50 px-4 py-1.5 shadow-[0_0_12px_rgba(16,185,129,0.6)]'">
+                <span class="relative flex h-2.5 w-2.5">
+                    @if (item().live) {
+                    <span
+                        class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-90"></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 shadow-glow-rose"></span>
+                    } @else {
+                    <span
+                        class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-glow-emerald"></span>
+                    }
+                </span>
+                <span class="text-[10px] font-black uppercase tracking-[0.25em] text-white drop-shadow-md">
+                    {{ (item().live ? 'live' : 'online') | translate }}
+                </span>
+            </div>
+        </div>
+        }
+
+        <!-- Contenido inferior: tipografía moderna y botones con efecto líquido -->
+        <!-- CORRECCIÓN: Las clases de opacidad y translación ahora consideran si existe perfil o no -->
+        <div class="absolute inset-x-0 bottom-0 p-5 md:p-6 transition-all duration-500 z-20 flex flex-col justify-end gap-3"
+            [class.translate-y-2]="hasProfile && !imageLoaded()" [class.opacity-0]="hasProfile && !imageLoaded()">
+
+            <a [routerLink]="['/', item().username]" class="flex flex-col gap-1 group/text">
+                <div class="flex items-baseline gap-2 flex-wrap">
+                    <h3 class="text-xl md:text-2xl font-black tracking-tight truncate max-w-[70%] 
+                               bg-gradient-to-r from-white via-white to-rose-300 bg-clip-text text-transparent
+                               drop-shadow-2xl group-hover/text:to-rose-400 transition-all duration-300">
+                        {{ item().alias || item().username }}
+                    </h3>
+                    @if (item().age) {
+                    <span
+                        class="text-sm font-black text-white/90 bg-white/10 backdrop-blur-sm px-2.5 py-0.5 rounded-full shadow-inner">
+                        {{ item().age! | calculateAge }}
+                    </span>
+                    }
+                </div>
+                <div
+                    class="flex items-center gap-1.5 text-white/80 backdrop-blur-sm w-fit rounded-full bg-black/30 px-3 py-1 border border-white/10">
+                    <i appIcon iconName="location-on-regular" size="w-3.5 h-3.5" color="text-rose-400"
+                        class="shrink-0"></i>
+                    <span
+                        class="text-[10px] font-bold uppercase tracking-widest truncate max-w-[130px] sm:max-w-[170px] whitespace-nowrap">
+                        {{ item().Country?.name || ('peopleAroundYou' | translate) }}
+                    </span>
+                </div>
+            </a>
+
+            <!-- Botones con micro-interacciones y efectos 3D -->
+            <footer class="mt-2 w-full flex gap-3">
+                @if (item().live) {
+                <button (click)="onLiveStream(item())" class="flex-1 h-12 rounded-full bg-gradient-to-r from-rose-600 to-pink-600 text-xs font-black uppercase tracking-wider text-white
+                            shadow-[0_6px_20px_rgba(244,63,94,0.5)] hover:shadow-[0_8px_30px_rgba(244,63,94,0.8)]
+                            hover:scale-[1.03] active:scale-98 transition-all duration-300 cursor-pointer
+                            flex items-center justify-center gap-2 group/btn relative overflow-hidden">
+                    <span
+                        class="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></span>
+                    <svg class="w-4 h-4 relative z-10 animate-pulse" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    <span class="relative z-10">{{ 'joinLive' | translate }}</span>
+                </button>
+                } @else if (item().online) {
+                <button (click)="onChat(item())" class="flex-1 h-12 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xs font-black uppercase tracking-wider
+                            shadow-md hover:bg-emerald-500 hover:text-black hover:border-transparent
+                            hover:shadow-[0_8px_25px_rgba(16,185,129,0.5)] hover:scale-[1.03] active:scale-98 transition-all duration-300
+                            flex items-center justify-center gap-2 group/btn">
+                    <svg class="w-4 h-4 group-hover/btn:animate-bounce" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                        </path>
+                    </svg>
+                    <span>{{ 'chat' | translate }}</span>
+                </button>
+                } @else {
+                <button (click)="onMatch(item())" class="flex-1 h-12 rounded-full bg-white/5 backdrop-blur-md border border-rose-500/30 text-rose-400 text-xs font-black uppercase tracking-wider
+                            hover:bg-gradient-to-r hover:from-rose-500 hover:to-pink-500 hover:text-white hover:border-transparent
+                            hover:shadow-[0_8px_25px_rgba(244,63,94,0.5)] hover:scale-[1.03] active:scale-98 transition-all duration-300
+                            flex items-center justify-center gap-2 group/btn overflow-hidden relative">
+                    <span
+                        class="absolute inset-0 bg-rose-500 translate-x-full group-hover/btn:translate-x-0 transition-transform duration-300 ease-out"></span>
+                    <i appIcon iconName="heart-solid" [size]="'w-5 h-5'" [color]="'currentColor'"
+                        class="relative z-10 transform group-hover/btn:scale-125 group-hover/btn:rotate-12 transition-all duration-300"></i>
+                    <span class="relative z-10">{{ 'Match' | translate }}</span>
+                </button>
+                }
+            </footer>
+        </div>
+
+        <!-- Efectos decorativos: glowing radiales y partículas sutiles -->
+        <div
+            class="absolute -top-32 -right-32 w-64 h-64 bg-rose-600/20 rounded-full blur-[80px] pointer-events-none z-0 group-hover:bg-rose-500/30 transition-all duration-700">
+        </div>
+        <div
+            class="absolute -bottom-32 -left-32 w-64 h-64 bg-purple-600/20 rounded-full blur-[80px] pointer-events-none z-0 group-hover:bg-purple-500/30 transition-all duration-700">
+        </div>
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-[2rem]">
+        </div>
+    </div>
+</article>

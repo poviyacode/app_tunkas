@@ -1,0 +1,32 @@
+<div class="fixed bottom-20 right-2 z-50 pointer-events-none space-y-2">
+    @for (item of notifications(); track item.id) {
+    <div [@notificationAnimation] class="pointer-events-auto">
+        <div class="flex items-center bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-md mx-auto w-64 sm:w-80">
+
+            <img [src]="item.icon || './public/icons/icon-48x48.png'" alt="Icon"
+                class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover mr-3 sm:mr-4 shrink-0" />
+
+            <div class="flex-grow min-w-0 w-full">
+                <h4 class="text-base sm:text-lg font-semibold text-zinc-700 dark:text-zinc-100 line-clamp-1">
+                    {{ item.title }}
+                </h4>
+                <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 line-clamp-2">
+                    {{ item.body }}
+                </p>
+                <small class="text-[10px] sm:text-xs text-zinc-400 dark:text-zinc-500 block mt-0.5">
+                    {{ formatTimestamp(item.timestamp) | dateAgo | translate }}
+                </small>
+            </div>
+
+            <div class="w-auto flex-shrink-0 ml-2">
+                <button type="button" (click)="removeNotification(item.id)"
+                    class="rounded-full w-8 h-8 flex justify-center items-center cursor-pointer transition-colors duration-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 pointer-events-auto border-0 bg-transparent">
+                    <i appIcon iconName="close-regular" [size]="'w-6 h-6'"
+                        [color]="'text-red-500 hover:text-red-700'"></i>
+                </button>
+            </div>
+
+        </div>
+    </div>
+    }
+</div>

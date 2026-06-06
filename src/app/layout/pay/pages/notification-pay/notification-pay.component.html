@@ -1,0 +1,42 @@
+@if (isBrowser && paymentOrder) {
+<div class="-mb-4 -pb-16 px-10 flex flex-col items-center justify-center min-h-screen">
+    <div
+        class=" bg-white dark:bg-zinc-800 shadow-xl rounded-2xl px-10 py-12 max-w-lg w-full text-center transform transition-all duration-300 hover:scale-105">
+        <div class="space-y-5 flex flex-col items-center">
+            <div class="text-6xl">
+                @if (paymentOrder.status == 'PAYMENT') {
+                <i appIcon iconName="check-circle-regular" [size]="'w-16 h-16'" [color]="'text-green-500'"></i>
+                } @else if (paymentOrder.status == 'DECLINE' || paymentOrder.status == 'ERROR') {
+                <i appIcon iconName="error-regular" [size]="'w-16 h-16'" [color]="'text-red-500'"></i>
+                }
+            </div>
+            <div class="text-3xl font-semibold text-zinc-800 dark:text-zinc-200 leading-snug tracking-wide">
+                @if (paymentOrder.status == 'PAYMENT') {
+                {{ 'successfulPayment' | translate }}
+                } @else if (paymentOrder.status == 'DECLINE') {
+                {{ 'paymentRejected' | translate }}
+                } @else if (paymentOrder.status == 'ERROR') {
+                {{ 'error' | translate }}
+                }
+            </div>
+        </div>
+
+        @if (paymentOrder.paymentMethod === 'CARD' && paymentOrder.receipt.message)
+        {
+        <div
+            class="text-lg font-normal text-zinc-600 dark:text-zinc-300 mt-6 bg-zinc-50 dark:bg-zinc-700 rounded-lg px-5 py-3 shadow-inner">
+            @if (paymentOrder.receipt.message == 'Suspected fraud'
+            || paymentOrder.receipt.message == 'Exceeds approval amount limit') {
+            <span class="text-red-600 dark:text-red-400 font-medium">
+                Request parameters are invalid or missing
+            </span>
+            } @else {
+            <span class="text-zinc-700 dark:text-zinc-300">
+                {{ paymentOrder.receipt.message }}
+            </span>
+            }
+        </div>
+        }
+    </div>
+</div>
+}

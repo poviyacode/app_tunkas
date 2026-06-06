@@ -1,0 +1,123 @@
+@if (isBrowser) {
+<ng-container #container></ng-container>
+<section class="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 relative overflow-hidden">
+    <div
+        class="absolute top-0 -left-4 w-72 h-72 bg-primary-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob">
+    </div>
+    <div
+        class="absolute bottom-0 -right-4 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000">
+    </div>
+
+    <div class="absolute inset-0 z-0">
+        <img src="https://image.qwenlm.ai/public_source/0f627eaa-9dd7-4a2e-a29c-c04e934860ee/004718b93-0d2d-492a-9460-a4d2fd5648365836.png"
+            alt="Background" class="w-full h-full object-cover opacity-10 dark:opacity-20">
+        <div
+            class="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-50/50 to-zinc-50 dark:via-zinc-950/50 dark:to-zinc-950">
+        </div>
+    </div>
+
+    <div class="w-full max-w-md px-6 z-10">
+        <div
+            class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/20 dark:border-zinc-800 shadow-2xl rounded-3xl p-8 md:p-10">
+
+            <div class="flex justify-between items-start mb-8">
+                <a routerLink="/" class="group">
+                    <div class="relative w-12 h-12">
+                        <img class="w-full h-full rounded-2xl shadow-lg transition-transform duration-500 group-hover:scale-105"
+                            src="./public/logo/icon.webp" alt="Logo" />
+                    </div>
+                </a>
+
+                <div class="relative">
+                    <form [formGroup]="myformLanguage">
+                        <select formControlName="language" #langSelect (change)="changeLang(langSelect.value)"
+                            class="cursor-pointer rounded-full py-1.5 px-3 focus:outline-none focus:ring bg-background-light dark:bg-background-dark  focus:ring-zinc-200 active:ring-zinc-200  focus:dark:ring-zinc-700 active:ring  active:dark:ring-zinc-700">
+                            @for (lang of langs; track $index) {
+                            <option [value]="lang.value" class="notranslate">
+                                {{ lang.name }}
+                            </option>
+                            }
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h1 class="text-2xl md:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
+                    {{ 'connectionsThatInspire' | translate }}
+                </h1>
+                <p class="hidden text-zinc-500 dark:text-zinc-400 mt-2 text-sm leading-relaxed">
+                    {{ 'enterEmailToResetPassword' | translate }}
+                </p>
+            </div>
+
+            <form [formGroup]="myForm" id="form" novalidate autocomplete="off" (ngSubmit)="login()"
+                class="space-y-6 backdrop-blur-sm">
+
+                <!-- Input Email Romántico -->
+                <div class="space-y-2">
+                    <label class="hidden text-sm font-medium ">
+                        <i appIcon iconName="heart-check-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                        {{ 'emailOrLoveUser' | translate }}
+                    </label>
+                    <div class="relative">
+                        <input formControlName="username" type="email" class="w-full pl-10 text-lg"
+                            placeholder="{{ 'emailOrLoveUser' | translate }}"
+                            [ngClass]="inputClass(myForm,'username')" />
+                        <div class="absolute inset-y-0 left-0 pl-2 flex items-center ">
+                            <i appIcon iconName="mark-email-read-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Password Íntimo -->
+                <div class="space-y-2">
+                    <label class="hidden text-sm font-medium ">
+                        <i appIcon iconName="lock-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                        {{ 'password' | translate }}
+                    </label>
+                    <div class="relative">
+                        <input formControlName="password" type="password" class="w-full pl-10 text-lg"
+                            placeholder="{{ 'password' | translate }}" [ngClass]="inputClass(myForm,'password')" />
+                        <div class="absolute inset-y-0 left-0 pl-2 flex items-center ">
+                            <i appIcon iconName="lock-regular" [size]="'w-6 h-6'" [color]="''"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Acción Principal -->
+                <button type="submit" [disabled]="myForm.status !== 'VALID'" [ngClass]="buttonClass()"
+                    class="mt-4 w-full">
+                    <span class="tracking-wider">{{ 'logIn' | translate }}</span>
+                </button>
+
+                <!-- Enlaces Secundarios -->
+
+                <div class="text-center">
+                    <a routerLink="/auth/forgot-password"
+                        class="inline-flex items-center font-semibold underline decoration-2 underline-offset-4 hover:decoration-primary-300 transition-all">
+                        {{ 'forgotPassword' | translate }}
+                    </a>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+                    <p class="text-zinc-600 dark:text-zinc-400 text-sm text-center">
+                        {{ 'noAccountYet' | translate }}
+                        <a routerLink="/auth/register"
+                            class="text-primary-600 dark:text-primary-400 font-bold hover:underline ml-1">
+                            {{ 'signUp' | translate }}
+                        </a>
+                    </p>
+                </div>
+
+            </form>
+        </div>
+
+        <p class="text-center mt-8 text-zinc-400 dark:text-zinc-600 text-xs tracking-widest uppercase">
+            &copy; {{currentYear}} YUVINKA
+        </p>
+
+    </div>
+
+</section>
+}

@@ -1,0 +1,133 @@
+<ng-container #container></ng-container>
+@if (userService.userProfile()) {
+<div class="flex justify-start items-center space-x-3 my-5 mx-2 text-sm font-semibold dark:text-zinc-300">
+
+  <a [routerLink]="['/', slug, 'media']" [routerLinkActiveOptions]="{exact: true}"
+    routerLinkActive="dark:bg-primary-800/5 text-primary-500 dark:text-primary-500 border-b border-primary-500" class="relative rounded-full flex flex-row items-center 
+          focus:outline-none 
+          bg-white dark:bg-zinc-700/30 
+          hover:bg-primary-500 hover:dark:bg-primary-600 
+          hover:text-white 
+          text-gray-800 dark:text-gray-200 
+          py-1 px-3 shadow-lg 
+          transition-all duration-300 ease-in-out 
+          transform hover:scale-105 space-x-1">
+    <span>{{ 'all' | translate }}</span>
+    <span>{{ count?.countPhotos + count?.countVideos }}</span>
+  </a>
+
+  <a [routerLink]="['/', slug, 'photos']" [routerLinkActiveOptions]="{exact: true}"
+    routerLinkActive="dark:bg-primary-800/5 text-primary-500 dark:text-primary-500 border-b border-primary-500" class="relative rounded-full flex flex-row items-center 
+          focus:outline-none 
+          bg-white dark:bg-zinc-700/30 
+          hover:bg-primary-500 hover:dark:bg-primary-600 
+          hover:text-white 
+          text-gray-800 dark:text-gray-200 
+          py-1 px-3 shadow-lg 
+          transition-all duration-300 ease-in-out 
+          transform hover:scale-105 space-x-1">
+    <span>{{ 'photos' | translate }}</span>
+    <span>{{ count?.countPhotos }}</span>
+  </a>
+
+  <a [routerLink]="['/', slug, 'videos']" [routerLinkActiveOptions]="{exact: true}"
+    routerLinkActive="dark:bg-primary-800/5 text-primary-500 dark:text-primary-500 border-b border-primary-500" class="relative rounded-full flex flex-row items-center 
+          focus:outline-none 
+          bg-white dark:bg-zinc-700/30 
+          hover:bg-primary-500 hover:dark:bg-primary-600 
+          hover:text-white 
+          text-gray-800 dark:text-gray-200 
+          py-1 px-3 shadow-lg 
+          transition-all duration-300 ease-in-out 
+          transform hover:scale-105 space-x-1">
+    <span>{{ 'videos' | translate }}</span>
+    <span>{{ count?.countVideos }}</span>
+  </a>
+
+</div>
+}
+
+@if (postMediaService.postMedias().length > 0) {
+<div class="space-y-4 pt-0">
+
+  <div class="grid grid-cols-3 gap-1 sm:gap-1">
+    @for (item of postMediaService.postMedias(); track $index) {
+    <figure #theLastList class="break-inside-avoid border border-zinc-300 dark:border-zinc-700 rounded-lg overflow-hidden bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-200 flex flex-col w-full shadow-md transition-transform hover:scale-105 duration-200 ease-in-out">
+
+      <div class="relative text-zinc-50">
+
+        @if (item.type == 'image') {
+        <img ngOptimizedImage priority="high" (click)="onModalPost(item, $index)"
+          src="{{item.cloudflare ? item.cloudflare.result.variants[0] :  item.url}}" alt="{{$index}}"
+          class="w-full h-44 sm:h-72 lg:h-96 object-cover transition-opacity group-hover:opacity-90">
+        }
+
+        @if (item.type == 'video') {
+        <img ngOptimizedImage priority="high" (click)="onModalPost(item, $index)"
+          [src]="item.cloudflare ? 'https://customer-6kruyx7h361tmu11.cloudflarestream.com/' + item.cloudflare.result.uid + '/thumbnails/thumbnail.gif?time=1s&height=200&duration=6s' : item.urlSnapshot"
+          alt="{{$index}}" class="w-full h-44 sm:h-72 lg:h-96 object-cover transition-opacity group-hover:opacity-90">
+        }
+
+        @if (item.Post?.typeView !== 'FREE' && this.subscriptionService.subscriptionJoin()?.expired) {
+        <div class="absolute inset-0 text-white dark:text-zinc-300 bg-zinc-100/50 dark:bg-zinc-800/50 m-0 space-y-2 
+          {{ item.Post?.previewMedia ? 'rounded-md backdrop-blur-lg m-5 sm:m-5' : 'backdrop-blur-3xl' }}">
+          <div class="flex justify-center items-center h-full">
+            <span
+              class="bg-purple-800 flex items-center justify-center text-zinc-50 rounded-full uppercase px-2 py-2 font-normal text-xs">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+          </div>
+        </div>
+        }
+
+        @if (item.type == 'video') {
+        <div (click)="onModalPost(item,$index)"
+          class="play-icon absolute inset-0 flex items-end justify-start text-white dark:text-zinc-300 opacity-90 m-2 cursor-pointer">
+          <i class="fa-solid fa-play text-base transition duration-300 transform hover:scale-125"></i>
+          play-regular
+        </div>
+        }
+
+      </div>
+
+    </figure>
+    }
+
+  </div>
+
+</div>
+
+@if(loading) {
+<div class="flex justify-center items-center space-x-2 mt-5">
+  <span class="relative flex h-3 w-3">
+    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+    <span class="relative inline-flex rounded-full h-3 w-3 bg-primary-500"></span>
+  </span>
+
+  <span class="relative flex h-2 w-2">
+    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"
+      style="animation-delay: 150ms;"></span>
+    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
+  </span>
+
+  <span class="relative flex h-2.5 w-2.5">
+    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"
+      style="animation-delay: 300ms;"></span>
+    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500"></span>
+  </span>
+</div>
+}
+
+} @else if(loading) {
+<div class="w-full mx-auto shadow-sm grid grid-cols-3 md:grid-cols-3 gap-1">
+  @for (item of postLoading; track $index) {
+  <div
+    class=" animate-pulse w-full h-44 sm:h-64 lg:h-72 border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 shadow-sm rounded ">
+  </div>
+  }
+</div>
+} @else {
+<div class=" text-center font-light text-3xl">
+  {{'there_is_no_data' | translate}}
+</div>
+}

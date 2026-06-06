@@ -1,0 +1,19 @@
+.fade-edges-mask {
+    /* Máscara para navegadores modernos */
+    mask-image: linear-gradient(to right,
+            transparent 0%,
+            white 15%,
+            white 85%,
+            transparent 100%);
+
+    /* Soporte para Chrome, Safari y Edge */
+    -webkit-mask-image: linear-gradient(to right,
+            transparent 0%,
+            white 15%,
+            white 85%,
+            transparent 100%);
+
+    /* Asegura que la máscara no se repita y cubra toda la imagen */
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}

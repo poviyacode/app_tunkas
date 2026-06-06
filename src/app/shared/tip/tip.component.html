@@ -1,0 +1,121 @@
+<ng-container #container></ng-container>
+@if (dialogService.activeModal() === 'tipCredit') {
+  <div [ngClass]="modalClass()" class="modal-center" (click)="onCloseModal()">
+    <div [ngClass]="cardModalClass()" class="w-full max-w-xl overflow-hidden" (click)="($event.stopPropagation())"
+      @flyInOut>
+
+      @if (tipService.tip()) {
+        <section class="p-2 sm:p-4 overflow-y-auto max-h-[80vh]">
+          <div class="flex justify-between items-center py-2 relative">
+            <h2 class="text-lg font-bold absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+              <i appIcon iconName="gift-regular" [size]="'w-6 h-6'" [color]="'text-primary-500'"></i>
+              <span class="text-xl whitespace-nowrap">
+                {{ 'sendAGift' | translate }}
+              </span>
+            </h2>
+
+            <button (click)="onCloseModal()"
+              class="cursor-pointer ml-auto relative z-10 flex justify-center items-center hover:bg-zinc-100 hover:dark:bg-zinc-700/30 rounded-full p-2 w-8 h-8">
+              <i appIcon iconName="close-regular" [size]="'w-6 h-6'" [color]="''"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center mb-4 space-x-3">
+            <div
+              class="rounded-full h-16 w-16 object-cover border-2 border-zinc-700/10 bg-purple-100 dark:bg-purple-800/10 shadow flex justify-center items-center text-3xl text-purple-500">
+              @if (tipService.tip()!.user?.Profile!.length > 0) {
+                <img class="h-16 w-16 object-cover rounded-full" [src]="getProfileImageUrl(tipService.tip()!.user!)" />
+              } @else {
+                {{ getFirstLetter(tipService.tip()!.user?.alias!! || tipService.tip()!.user?.username!!)}}
+              }
+            </div>
+
+            <div class="">
+              @if (tipService.tip()!.user?.alias) {
+                <div class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 max-w-xs line-clamp-1">
+                  {{ tipService.tip()!.user?.alias}}
+                </div>
+              }
+              <div class="truncate text-zinc-500 dark:text-zinc-400">{{'@'}}{{ tipService.tip()!.user?.username }}</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-2">
+            @for (gift of gifts; track gift) {
+<div class="group bg-zinc-100 dark:bg-zinc-800 rounded-xl p-2 cursor-pointer transition-all 
+                   shadow-md hover:-translate-y-1 hover:shadow-lg border-2 border-zinc-100 dark:border-zinc-800
+                   hover:border-primary-500/20 dark:hover:border-primary-400/30 relative
+                   dark:hover:shadow-zinc-700/20" (click)="selectGift(gift)">
+          <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 
+                        transition-opacity bg-gradient-to-br from-primary-500/10 to-transparent 
+                        dark:from-primary-400/10 pointer-events-none"></div>
+          <div class="text-4xl text-center mb-2 dark:text-zinc-100 hover:scale-110 
+                        transition-transform duration-200">
+                  {{ gift.image }}
+                </div>
+                <div class="text-center">
+                  <div class="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                    {{ gift.name | translate}}
+                  </div>
+                  <div class="text-primary-500 dark:text-primary-400 font-bold text-base">
+                    <span appIcon iconName="povicoin-solid" [size]="'w-4 h-4'"></span>
+                    <span>{{ gift.price }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Sección de Balance -->
+          <div
+            class="mt-4 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 p-2 rounded-xl border border-zinc-100 dark:border-zinc-700 shadow-md">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i appIcon iconName="povicoin-solid" [size]="'w-6 h-6'" [color]="'text-amber-500'"></i>
+                <div>
+                  <p class="text-xs font-medium text-zinc-600 dark:text-zinc-300">{{ 'currentBalance' | translate }}</p>
+                  <p class="text-lg font-bold text-zinc-800 dark:text-zinc-100">
+                    {{ userCreditService.userCredit()?.current || 0 | number:'1.0-0' }}
+                  </p>
+                </div>
+              </div>
+
+              <button (click)="openCreditPurchase()" [ngClass]="buttonClass()">
+                <span class="text-sm font-semibold">{{ 'reload' | translate }}</span>
+              </button>
+            </div>
+          </div>
+
+          @if (selectedGift) {
+            <div class="mt-6 space-y-4 animate-fade-in">
+              <div class="bg-white dark:bg-zinc-800 p-4 rounded-xl border border-primary-500/20 dark:border-primary-400/20">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-zinc-600 dark:text-zinc-300">
+                    <span class="font-medium">Seleccionado:</span>
+                    <span class="text-primary-500 dark:text-primary-400 ml-2">{{ selectedGift.image }}</span>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400">Valor</div>
+                    <div class="text-lg font-bold text-primary-500 dark:text-primary-400">
+                      <span appIcon iconName="povicoin-solid" [size]="'w-4 h-4'"></span>
+                      <span>{{ selectedGift.price }}</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Botón de Envío Mejorado -->
+                <button (click)="sendGift()" [ngClass]="buttonClass()" class=" px-4 py-2 w-full rounded-full">
+                  {{'sendGift' | translate}}
+                </button>
+              </div>
+              <!-- Mensaje Adicional -->
+              <div class="text-center text-sm text-zinc-500 dark:text-zinc-400 italic">
+                {{'giftHighlightedProfile' | translate}}
+              </div>
+            </div>
+          }
+
+        </section>
+      }
+    </div>
+  </div>
+}

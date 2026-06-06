@@ -1,0 +1,125 @@
+@if (isBrowser) {
+
+<!-- Live Users Grid -->
+<section class="px-4 md:px-8 lg:px-16 py-8 mb-16">
+    <h2 class="text-2xl md:text-3xl font-bold text-zinc-800 dark:text-zinc-100 mb-6">
+        {{ 'liveNow' | translate }} 🔥
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+        @for (item of userService.usersLive(); track item._id) {
+        <article (click)="onLiveStream(item)"
+            class="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary-500"
+            role="button" tabindex="0" [attr.aria-labelledby]="'user-' + item._id + '-name'">
+
+            <!-- Live Status & Thumbnail -->
+            <div class="relative overflow-hidden rounded-t-2xl h-60 group">
+                <!-- User Thumbnail -->
+                <img [src]="getBackgroundImageUrl(item)" [alt]="item.username + ' live stream preview'"
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+
+                <!-- Live Badge -->
+                @if (item.liveCapture) {
+                <div
+                    class="absolute top-3 left-3 flex items-center space-x-2 z-10 bg-red-600 px-2 py-1 rounded-lg shadow-md">
+                    <span class="text-xs font-bold text-white drop-shadow-md">{{ 'live' | translate }}</span>
+                </div>
+                }
+
+                <!-- Gender Indicator -->
+                <div class="absolute top-3 right-3 z-10">
+                    @if (item.gender === 'WOMAN') {
+                    <span class="bg-pink-500 rounded-full w-6 h-6 flex justify-center items-center">
+                        <i appIcon iconName="female-regular" [color]="'text-white'" [size]="'w-6 h-6'"></i>
+                    </span>
+                    } @else if (item.gender === 'MAN') {
+                    <span class="bg-blue-500 rounded-full w-6 h-6 flex justify-center items-center">
+                        <i appIcon iconName="male-regular" [color]="'text-white'" [size]="'w-6 h-6'"></i>
+                    </span>
+                    }
+                </div>
+            </div>
+
+            <!-- User Profile Section -->
+            <div class="p-4">
+                <div class="flex items-center space-x-4">
+                    <!-- Avatar with Online Status -->
+                    <div class="relative flex-shrink-0">
+
+                        @if (item.Profile!.length > 0) {
+                        <div
+                            class="w-14 h-14 rounded-full overflow-hidden border-2 border-zinc-100 dark:border-zinc-800">
+                            <img class="w-fit h-fit object-cover rounded-full" [src]=" item.Profile![0].cloudflare
+                                            ?  item.Profile![0].cloudflare.result.variants[0]
+                                              ?  item.Profile![0].cloudflare.result.variants[0]
+                                              :  item.Profile![0].url
+                                            : ''
+                                        " />
+                        </div>
+                        } @else {
+                        <div
+                            class="rounded-full w-14 h-14 object-cover border-2 border-zinc-100 dark:border-zinc-800 shadow flex justify-center items-center text-3xl text-primary-500">
+                            {{ getFirstLetter(item.alias!! || item.username!!)}}
+                        </div>
+                        }
+                        <div class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900"
+                            [ngClass]="{ 'bg-green-500': item.online, 'bg-gray-400': !item.online }">
+                        </div>
+                    </div>
+
+                    <!-- User Info -->
+                    <div class="flex flex-col truncate">
+                        <h2 class="text-lg font-semibold text-zinc-800 dark:text-white truncate">
+                            {{ item.username || 'Unknown User' }}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+
+        </article>
+        }
+
+        @if(loading) {
+        <!-- Skeleton Loader -->
+        @for (item of [1,2,3,4,5,6,7,8]; track $index) {
+        <div class="animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-2xl h-[350px]">
+            <div class="h-60 bg-zinc-200 dark:bg-zinc-700 rounded-t-2xl"></div>
+            <div class="p-4 space-y-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-700"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4"></div>
+                        <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+        }
+    </div>
+
+    <!-- Start Streaming CTA -->
+    @if (!loading && this.userService.usersLive().length === 0) {
+    <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div class="flex flex-col justify-center items-center max-w-md space-y-6">
+            <div class="space-y-2">
+                <h1 class="text-3xl font-bold text-zinc-800 dark:text-zinc-100">
+                    {{ 'realTimeConnect' | translate }} ❤️🔥
+                </h1>
+                <p class="text-zinc-600 dark:text-zinc-400">
+                    {{ 'breakTheIce' | translate }}
+                </p>
+            </div>
+
+            @if (authService.user()) {
+            <button (click)="onStartLiveStream()" [ngClass]="buttonClass()"
+                class="w-auto px-10 flex items-center justify-center p-3 rounded-full space-x-2">
+                <i appIcon iconName="videocam-regular" [size]="'w-6 h-6'" aria-hidden="true" [color]="''"></i>
+                <span class="font-semibold text-sm">{{ "startLive" | translate }}</span>
+            </button>
+            }
+        </div>
+    </div>
+    }
+</section>
+}

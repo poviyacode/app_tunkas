@@ -1,0 +1,114 @@
+<router-outlet></router-outlet>
+@if (isBrowser) {
+<ng-container #container></ng-container>
+
+<main class="space-y-0 px-2 md:px-2 my-4 md:mt-10 md:mb-16">
+
+  <div class="mb-10 px-4 sm:px-6 flex flex-col lg:flex-row justify-between items-center gap-6">
+
+    <div class="space-y-1 text-center lg:text-left">
+      <h1 class="text-3xl md:text-4xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100">
+        {{'discover' | translate}}
+        <span
+          class="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400">
+          {{'excitingPosts' | translate}}
+        </span>
+      </h1>
+      <p class="text-zinc-500 dark:text-zinc-400 text-sm font-medium">
+        {{'discoverPosts' | translate}}
+      </p>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+
+      <div
+        class="flex items-center p-1.5 bg-zinc-100/80 dark:bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm w-full sm:w-auto">
+
+        <button (click)="navigateTo('top')" [class]="isLinkActive('top') 
+          ? 'bg-white dark:bg-zinc-800 text-primary-600 dark:text-primary-400 shadow-md ring-1 ring-zinc-200/50 dark:ring-zinc-700/50' 
+          : 'text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'"
+          class="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 active:scale-95">
+          {{'top' | translate}}
+        </button>
+
+        <button (click)="navigateTo('recent')" [class]="isLinkActive('recent') 
+          ? 'bg-white dark:bg-zinc-800 text-primary-600 dark:text-primary-400 shadow-md ring-1 ring-zinc-200/50 dark:ring-zinc-700/50' 
+          : 'text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'"
+          class="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 active:scale-95">
+          {{'recent' | translate}}
+        </button>
+      </div>
+
+      <button (click)="onSearch()" [ngClass]="buttonPrimaryClass()" class=" w-full">
+        <i appIcon iconName="search-regular" [size]="'w-5 h-5'" [color]="'text-white'"></i>
+        <span class="text-sm font-bold sm:hidden lg:inline">{{'search' | translate}}</span>
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="flex flex-wrap gap-2 p-1 sm:gap-4 sm:p-2 justify-start">
+
+    @for (item of this.postService.posts(); track item._id) {
+    @defer (on viewport) {
+    <app-post-card [item]="item"
+      class="flex-auto min-w-[calc(50%-0.5rem)] sm:min-w-[calc(33.33%-1rem)] lg:min-w-[calc(25%-1rem)] xl:min-w-[calc(20%-1rem)] 2xl:min-w-[calc(16.66%-1rem)]" />
+    } @placeholder {
+    <div
+      class="flex-auto min-w-[calc(50%-0.5rem)] sm:min-w-[calc(33.33%-1rem)] lg:min-w-[calc(25%-1rem)] xl:min-w-[calc(20%-1rem)] 2xl:min-w-[calc(16.66%-1rem)] h-[320px] bg-zinc-900 rounded-[2.5rem] animate-pulse">
+    </div>
+    }
+    }
+
+    @if (isLoading()) {
+    @for (h of ['h-[280px]', 'h-[350px]', 'h-[310px]', 'h-[380px]', 'h-[290px]', 'h-[340px]', 'h-[300px]', 'h-[320px]',
+    'h-[360px]', 'h-[280px]', 'h-[340px]', 'h-[310px]']; track $index) {
+    <div class="flex-auto 
+                 min-w-[calc(50%-0.5rem)] 
+                 sm:min-w-[calc(33.33%-1rem)] 
+                 lg:min-w-[calc(25%-1rem)] 
+                 xl:min-w-[calc(20%-1rem)] 
+                 2xl:min-w-[calc(16.66%-1rem)]
+                 relative overflow-hidden rounded-[2.5rem] bg-zinc-200 dark:bg-zinc-900 animate-pulse" [class]="h">
+
+      <div class="absolute bottom-6 left-5 right-5 space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="h-5 w-3/4 bg-zinc-300 dark:bg-zinc-800 rounded-xl"></div>
+          <div class="h-5 w-1/4 bg-zinc-300 dark:bg-zinc-800 rounded-xl"></div>
+        </div>
+        <div class="h-10 w-full bg-zinc-300 dark:bg-zinc-800 rounded-2xl"></div>
+      </div>
+
+      <div class="absolute inset-0 flex items-center justify-center opacity-10">
+        <i appIcon iconName="heart-solid" [size]="'w-10 h-10'" [color]="'text-zinc-400 dark:text-zinc-700'"></i>
+      </div>
+    </div>
+    }
+    }
+
+    <div class="flex-[999] grow-[999] basis-auto h-0"></div>
+  </div>
+
+</main>
+
+@if (!isLoading() && this.postService.posts().length === 0) {
+<div
+  class="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-6 text-zinc-500 dark:text-zinc-400">
+  <!-- Ícono principal -->
+  <div class="flex items-center justify-center w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-full shadow-md">
+    <i appIcon iconName="grid-view-regular" [size]="'w-12 h-12'" [color]="'text-zinc-500 dark:text-zinc-400'"></i>
+  </div>
+
+  <!-- Título principal -->
+  <h2 class="text-2xl font-medium text-zinc-700 dark:text-zinc-200">{{'noPostsYet' | translate}}</h2>
+
+  <!-- Mensaje secundario -->
+  <p class="text-base font-light max-w-md hidden">
+    {{'startSavingYourFavoriteContent' | translate}}
+  </p>
+
+</div>
+}
+
+}
