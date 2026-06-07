@@ -616,7 +616,7 @@ export default class ProfilesHomeComponent {
     }
 
     // 2. Pedimos los usuarios online de la RAM una vez configuradas las escuchas
-    //this.socketService.socket.emit('request_initial_online_users');
+    this.socketService.socket.emit('request_initial_online_users');
   }
 
   detachSocketEvents() {

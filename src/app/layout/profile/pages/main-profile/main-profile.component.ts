@@ -648,7 +648,7 @@ export default class MainProfileComponent {
       this.socketService.connect();
     }
 
-    //this.socketService.socket.emit('request_initial_online_users');
+    this.socketService.socket.emit('request_initial_online_users');
   }
 
   detachSocketEvents() {
