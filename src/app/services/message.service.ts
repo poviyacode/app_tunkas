@@ -6,7 +6,6 @@ import { environment } from '../../environments/environment';
 import { Headers } from '../core/common/http-headers';
 import { Router } from '@angular/router';
 import { Message } from '@interfaces/message';
-import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc, setDoc, collectionData, FieldValue, serverTimestamp } from '@angular/fire/firestore';
 import { User } from '@interfaces/user';
 import { StorageService } from './storage.service';
 import Dexie from 'dexie';
@@ -26,7 +25,6 @@ export class MessageService {
 
   private http = inject(HttpClient);
   private router = inject(Router);
-  private firestore = inject(Firestore);
   private storageService = inject(StorageService);
   private socketService = inject(SocketService);
 
@@ -189,80 +187,6 @@ export class MessageService {
       localStorage.removeItem('userReceiver');
     }
     this.userReceiver.set(null);
-  }
-
-  //********************* firebase */ 
-  // Enviar mensaje
-  async sendMessageFire(data: any) {
-    const messagesRef = collection(this.firestore, 'messages');
-    return await addDoc(messagesRef, data);
-  }
-
-  async deleteMessageFire(messageId: string) {
-    const messageRef = doc(this.firestore, `messages/${messageId}`);
-    return await deleteDoc(messageRef);
-  }
-
-  getMessagesFire(chatId: string): Observable<any[]> {
-    return new Observable(observer => {
-      const messagesRef = collection(this.firestore, 'messages');
-
-      const q = query(messagesRef,
-        where('Chat', 'in', [chatId]),
-        orderBy('createdAt', 'asc')
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        observer.next(messages);
-      });
-
-      return () => unsubscribe();
-    });
-  }
-
-  async sendMessage11(chatId: string, data: any) {
-    //const chatId = [senderId, receiverId].sort().join('_');
-    const messagesRef = collection(this.firestore, `chats/${chatId}/messages`);
-
-    const currentDate = new Date();
-    const isoString = currentDate.toISOString();
-
-    await setDoc(doc(this.firestore, `chats/${chatId}`), {
-      lastMessage: data.message,
-      createdAt: isoString,
-      timestamp: new Date(),
-    }, { merge: true });
-
-    return await addDoc(messagesRef, {
-      ...data,
-      createdAt: isoString,
-      timestamp: new Date(),
-    });
-  }
-
-  async deleteMessage11(chatId: string, messageId: string) {
-    const messageRef = doc(this.firestore, `chats/${chatId}/messages/${messageId}`);
-    return await deleteDoc(messageRef);
-  }
-
-  // Obtener mensajes de un chat específico en tiempo real
-  getMessages11(chatId: string): Observable<any[]> {
-    //const chatId = [senderId, receiverId].sort().join('_');
-    return new Observable(observer => {
-      const messagesRef = collection(this.firestore, `chats/${chatId}/messages`);
-
-      const q = query(messagesRef,
-        orderBy('createdAt', 'asc')
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        observer.next(messages);
-      });
-
-      return () => unsubscribe();
-    });
   }
 
   // dexie

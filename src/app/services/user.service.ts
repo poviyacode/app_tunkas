@@ -8,7 +8,6 @@ import { Router } from "@angular/router";
 import { User, UserCurrent, UserRole, UserVideoCallRequest } from "@interfaces/user";
 import { StorageService } from "./storage.service";
 import { ResponseApi } from "@interfaces/responseApi";
-import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc, getDoc, setDoc, updateDoc, getDocs } from '@angular/fire/firestore';
 import { AuthService } from "./auth.service";
 import { UserCreditService } from "./user-credit.service";
 import { SubscriptionService } from "./subscription.service";
@@ -25,7 +24,6 @@ export class UserService {
   private errorHandler = inject(ErrorHandlerService);
   private router = inject(Router);
   private storageService = inject(StorageService);
-  private firestore = inject(Firestore);
   private injector = inject(Injector);
 
   profile(data: any): Observable<any> {
@@ -423,52 +421,6 @@ export class UserService {
   getRoles(role: string): boolean {
     const authService = this.injector.get(AuthService);
     return !!authService.user()?.roles?.includes(role as UserRole);
-  }
-
-  //********************* firebase */ 
-  async createFire(userId: string, data: any) {
-    // Referencia al documento del usuario en Firestore
-    const userRef = doc(this.firestore, `users/${userId}`);
-    const userSnapshot = await getDoc(userRef);
-
-    if (!userSnapshot.exists()) {
-      // Si el usuario no existe, crearlo con el mismo _id
-      await setDoc(userRef, data);
-    } else {
-      // Si el usuario ya existe, actualizar sus datos
-      await updateDoc(userRef, data);
-    }
-
-    return userId; // Retornar el mismo ID para usarlo en el chat
-  }
-
-  getActiveUsersFire(): Observable<any[]> {
-    const usersRef = collection(this.firestore, 'users');
-
-    return new Observable<any[]>(subscriber => {
-      // Escuchar cambios en usuarios con `online = true`
-      const unsubscribeOnline = onSnapshot(query(usersRef, where('online', '==', true)), snapshot => {
-        const onlineUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // Escuchar cambios en usuarios con `live = true`
-        const unsubscribeLive = onSnapshot(query(usersRef, where('live', '==', true)), liveSnapshot => {
-          const liveUsers = liveSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          // Combinar ambos resultados y eliminar duplicados
-          const allUsers = [...onlineUsers, ...liveUsers].filter(
-            (user, index, self) => index === self.findIndex(u => u.id === user.id)
-          );
-
-          subscriber.next(allUsers); // Emitir la lista actualizada
-        });
-
-        // Cleanup del observable
-        return () => {
-          unsubscribeOnline();
-          unsubscribeLive();
-        };
-      });
-    });
   }
 
 }
